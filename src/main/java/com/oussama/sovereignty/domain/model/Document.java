@@ -12,6 +12,8 @@ public record Document(
         LocalDateTime createdAt
 ) {
 
-    public enum DocumentStatus {}
+    public enum DocumentStatus {
+        UPLOADED;
+    }
 
 }
