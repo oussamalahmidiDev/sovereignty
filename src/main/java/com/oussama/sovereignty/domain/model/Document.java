@@ -7,7 +7,11 @@ public record Document(
         UUID id,
         String fileName,
         String contentType,
+        DocumentStatus status,
         byte[] content,
         LocalDateTime createdAt
 ) {
+
+    public enum DocumentStatus {}
+
 }
