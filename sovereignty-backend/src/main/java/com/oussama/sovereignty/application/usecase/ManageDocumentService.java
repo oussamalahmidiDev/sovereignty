@@ -1,6 +1,6 @@
 package com.oussama.sovereignty.application.usecase;
 
-import com.oussama.sovereignty.application.ports.in.ImportDocumentUseCase;
+import com.oussama.sovereignty.application.ports.in.ManageDocumentUseCase;
 import com.oussama.sovereignty.application.ports.out.DocumentEventPublisherPort;
 import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
@@ -10,11 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ImportDocumentService implements ImportDocumentUseCase {
+public class ManageDocumentService implements ManageDocumentUseCase {
 
     private final DocumentRepositoryPort documentRepository;
     private final DocumentStoragePort storagePort;
@@ -38,5 +39,18 @@ public class ImportDocumentService implements ImportDocumentUseCase {
         documentRepository.save(document);
 
         eventPublisher.publishDocumentUploaded(document);
+    }
+
+    @Override
+    public List<Document> findAllDocuments() {
+        return documentRepository.findAllDocuments();
+    }
+
+    @Override
+    @Transactional
+    public void deleteDocument(UUID id, String fileName) {
+        documentRepository.deleteDocument(id);
+
+        storagePort.delete(fileName);
     }
 }

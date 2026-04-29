@@ -1,7 +1,7 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.web;
 
 import com.oussama.sovereignty.application.usecase.AskQuestionService;
-import com.oussama.sovereignty.infrastructure.adapters.in.web.request.AnswerResponse;
+import com.oussama.sovereignty.infrastructure.adapters.in.web.response.AnswerResponse;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.request.QuestionRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

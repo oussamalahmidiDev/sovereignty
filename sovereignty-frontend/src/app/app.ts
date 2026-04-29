@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, effect, inject, OnInit, signal} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {ChatService} from './services/chat.service';
 import {DocumentService} from './services/document.service';
@@ -13,6 +13,13 @@ export class App {
 
   public chatService = inject(ChatService);
   public documentService = inject(DocumentService);
+
+  constructor() {
+    effect(() => {
+      this.documentService.fetchDocuments();
+    });
+  }
+
 
   onSend(inputElement: HTMLInputElement) {
     const question = inputElement.value.trim();
