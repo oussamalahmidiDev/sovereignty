@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface VectorStorePort {
-    void save(UUID documentId, String content, float[] vector);
+    void save(UUID documentId, String content);
 
-    List<String> findTopSimilar(float[] queryVector, int limit);
+    List<String> findTopSimilar(String question, int limit);
 }

@@ -6,7 +6,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SpringAiAdapter implements AiAgentPort {
 
-    private final EmbeddingModel embeddingModel;
     private final ChatModel chatModel;
 
     @Override
@@ -39,8 +37,4 @@ public class SpringAiAdapter implements AiAgentPort {
                 .getText();
     }
 
-    @Override
-    public float[] embed(String text) {
-        return embeddingModel.embed(text);
-    }
 }

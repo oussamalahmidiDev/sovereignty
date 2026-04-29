@@ -1,6 +1,5 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.messaging;
 
-import com.oussama.sovereignty.application.ports.out.AiAgentPort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.domain.service.TextSplitter;
@@ -16,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DocumentWorker {
 
-    private final AiAgentPort aiAgentPort;
     private final VectorStorePort vectorStorePort;
     private final TextSplitter textSplitter = new TextSplitter(1000, 200);
 
@@ -31,9 +29,7 @@ public class DocumentWorker {
         log.info("Document is splitted in {} morceaux.", textChunks.size());
 
         for (String chunk : textChunks) {
-            float[] vector = aiAgentPort.embed(chunk);
-
-            vectorStorePort.save(document.id(), chunk, vector);
+            vectorStorePort.save(document.id(), chunk);
         }
 
         log.info("Vectorisation is finished successfully : {}", document.fileName());

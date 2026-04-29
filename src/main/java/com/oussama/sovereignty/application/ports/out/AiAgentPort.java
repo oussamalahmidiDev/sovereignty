@@ -4,6 +4,4 @@ import java.util.List;
 
 public interface AiAgentPort {
     String askQuestion(String userPrompt, List<String> context);
-
-    float[] embed(String text);
 }

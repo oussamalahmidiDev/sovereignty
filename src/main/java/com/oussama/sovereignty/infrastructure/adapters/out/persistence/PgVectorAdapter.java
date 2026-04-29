@@ -18,7 +18,7 @@ public class PgVectorAdapter implements VectorStorePort {
     private final VectorStore pgVectorStore;
 
     @Override
-    public void save(UUID documentId, String content, float[] vector) {
+    public void save(UUID documentId, String content) {
 
         Document document = new Document(content, Map.of("documentId", documentId.toString()));
 
@@ -26,9 +26,9 @@ public class PgVectorAdapter implements VectorStorePort {
     }
 
     @Override
-    public List<String> findTopSimilar(float[] queryVector, int limit) {
+    public List<String> findTopSimilar(String question, int limit) {
         return pgVectorStore.similaritySearch(
-                        SearchRequest.builder().query("").topK(limit).build()
+                        SearchRequest.builder().query(question).topK(limit).build()
                 ).stream()
                 .map(Document::getFormattedContent)
                 .toList();
