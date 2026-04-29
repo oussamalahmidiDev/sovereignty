@@ -3,5 +3,7 @@ package com.oussama.sovereignty.application.ports.out;
 import java.util.List;
 
 public interface AiAgentPort {
-    String askQuestion(String prompt, List<String> context);
+    String askQuestion(String userPrompt, List<String> context);
+
+    float[] embed(String text);
 }
