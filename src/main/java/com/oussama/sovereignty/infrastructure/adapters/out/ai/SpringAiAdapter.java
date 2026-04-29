@@ -7,8 +7,6 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.ollama.OllamaChatModel;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,8 +16,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SpringAiAdapter implements AiAgentPort {
 
-    private final EmbeddingModel localEmbeddingModel;
-    private final OllamaChatModel chatModel;
+    private final EmbeddingModel embeddingModel;
+    private final ChatModel chatModel;
 
     @Override
     public String askQuestion(String userPrompt, List<String> context) {
@@ -43,6 +41,6 @@ public class SpringAiAdapter implements AiAgentPort {
 
     @Override
     public float[] embed(String text) {
-        return localEmbeddingModel.embed(text);
+        return embeddingModel.embed(text);
     }
 }
