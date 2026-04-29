@@ -7,6 +7,8 @@ import com.oussama.sovereignty.infrastructure.adapters.out.persistence.repositor
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
@@ -25,5 +27,21 @@ public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
                 .build();
 
         repository.save(entity);
+    }
+
+    @Override
+    public List<Document> findAllDocuments() {
+        List<DocumentEntity> entities = repository.findAll();
+
+        return entities.stream()
+                .map(entity ->
+                        new Document(entity.getId(), entity.getFileName(), entity.getContentType(), entity.getStatus(), null, entity.getCreatedAt())
+                )
+                .toList();
+    }
+
+    @Override
+    public void deleteDocument(String id) {
+
     }
 }

@@ -36,3 +36,8 @@ spring:
           model: mxbai-embed-large
       chat:
         model: tinydolphin
+
+sovereignty:
+  storage:
+    provider: local
+    path: ./storage

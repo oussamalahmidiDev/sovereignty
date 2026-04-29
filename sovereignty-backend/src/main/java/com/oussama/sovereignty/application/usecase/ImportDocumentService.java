@@ -3,6 +3,7 @@ package com.oussama.sovereignty.application.usecase;
 import com.oussama.sovereignty.application.ports.in.ImportDocumentUseCase;
 import com.oussama.sovereignty.application.ports.out.DocumentEventPublisherPort;
 import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
+import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
 import com.oussama.sovereignty.domain.model.Document;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class ImportDocumentService implements ImportDocumentUseCase {
 
     private final DocumentRepositoryPort documentRepository;
+    private final DocumentStoragePort storagePort;
     private final DocumentEventPublisherPort eventPublisher;
 
     @Override
@@ -30,6 +32,8 @@ public class ImportDocumentService implements ImportDocumentUseCase {
                 content,
                 LocalDateTime.now()
         );
+
+        storagePort.store(content, fileName);
 
         documentRepository.save(document);
 
