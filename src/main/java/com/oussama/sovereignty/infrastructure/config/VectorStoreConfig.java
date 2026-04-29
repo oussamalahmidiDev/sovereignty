@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class VectorStoreConfig {
 
     @Bean
-    public VectorStore pgVectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel localEmbeddingModel) {
-        return PgVectorStore.builder(jdbcTemplate, localEmbeddingModel).build();
+    public VectorStore pgVectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel) {
+        return PgVectorStore.builder(jdbcTemplate, embeddingModel).build();
     }
 }
