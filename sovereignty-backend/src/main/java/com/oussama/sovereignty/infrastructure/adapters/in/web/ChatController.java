@@ -4,12 +4,10 @@ import com.oussama.sovereignty.application.usecase.AskQuestionService;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.request.AnswerResponse;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.request.QuestionRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
