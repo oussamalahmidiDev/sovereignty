@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import {ChatService} from './services/chat.service';
 
 @Component({
   selector: 'app-root',
@@ -8,5 +9,16 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('sovereignty-frontend');
+
+  public chatService = inject(ChatService);
+
+  onSend(inputElement: HTMLInputElement) {
+    const question = inputElement.value.trim();
+
+    if (question.length > 0) {
+      this.chatService.askQuestion(question);
+
+      inputElement.value = '';
+    }
+  }
 }
