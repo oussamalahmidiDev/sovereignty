@@ -1,11 +1,9 @@
-import {Component, effect, inject, OnInit, signal} from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {Component, effect, inject} from '@angular/core';
 import {ChatService} from './services/chat.service';
 import {DocumentService} from './services/document.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
