@@ -6,5 +6,7 @@ import java.util.UUID;
 public interface VectorStorePort {
     void save(UUID documentId, String content);
 
+    void clean(UUID documentId);
+
     List<String> findTopSimilar(String question, int limit);
 }

@@ -4,6 +4,7 @@ import com.oussama.sovereignty.application.ports.in.ManageDocumentUseCase;
 import com.oussama.sovereignty.application.ports.out.DocumentEventPublisherPort;
 import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
+import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.domain.model.Document;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class ManageDocumentService implements ManageDocumentUseCase {
     private final DocumentRepositoryPort documentRepository;
     private final DocumentStoragePort storagePort;
     private final DocumentEventPublisherPort eventPublisher;
+    private final VectorStorePort vectorStorePort;
 
     @Override
     @Transactional
@@ -52,5 +54,7 @@ public class ManageDocumentService implements ManageDocumentUseCase {
         documentRepository.deleteDocument(id);
 
         storagePort.delete(fileName);
+
+        vectorStorePort.clean(id);
     }
 }
