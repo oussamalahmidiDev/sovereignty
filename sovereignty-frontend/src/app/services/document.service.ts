@@ -1,5 +1,6 @@
 import {inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
+import {environment} from '../../environments/environment';
 
 export interface Document {
   fileName: string,
@@ -11,7 +12,7 @@ export interface Document {
 })
 export class DocumentService {
 
-  private readonly API_URL = 'http://localhost:8080/api/documents';
+  private readonly API_URL = `${environment.apiUrl}/api/documents`;
 
   private httpClient = inject(HttpClient);
 

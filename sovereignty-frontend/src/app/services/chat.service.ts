@@ -1,5 +1,6 @@
 import {inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
+import {environment} from '../../environments/environment';
 
 export interface ChatMessage {
   message: string;
@@ -15,7 +16,7 @@ export interface AnswerResponse {
 })
 export class ChatService {
 
-  private readonly API_URL = 'http://localhost:8080/api/chat/ask';
+  private readonly API_URL = `${environment.apiUrl}/api/chat/ask`;
 
 
   private httpClient = inject(HttpClient);
