@@ -1,0 +1,44 @@
+app:
+  name: sovereignty-ai
+
+backend:
+  name: sovereignty-backend
+  image: sovereignty-ai-backend:latest
+  imagePullPolicy: Never
+  replicas: 1
+  port: 8080
+  config:
+    datasourceUrl: jdbc:postgresql://postgres:5432/sovereignty_ai
+    kafkaBootstrapServers: kafka:9092
+    ollamaBaseUrl: http://host.docker.internal:11434
+  secret:
+    datasourceUsername: admin
+    datasourcePassword: password
+
+frontend:
+  name: sovereignty-frontend
+  image: sovereignty-ai-frontend:latest
+  imagePullPolicy: Never
+  replicas: 1
+  port: 80
+
+postgres:
+  name: postgres
+  image: ankane/pgvector:latest
+  port: 5432
+  database: sovereignty_ai
+  username: admin
+  password: password
+  storage:
+    size: 2Gi
+
+kafka:
+  name: kafka
+  image: apache/kafka:latest
+  port: 9092
+  controllerPort: 9093
+
+ingress:
+  enabled: true
+  className: nginx
+  host: sovereignty.local
