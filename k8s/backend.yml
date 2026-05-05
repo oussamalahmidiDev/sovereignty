@@ -18,17 +18,11 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
-          env:
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/sovereignty_ai
-            - name: SPRING_DATASOURCE_USERNAME
-              value: admin
-            - name: SPRING_DATASOURCE_PASSWORD
-              value: password
-            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: kafka:9092
-            - name: SPRING_AI_OLLAMA_BASE_URL
-              value: http://host.docker.internal:11434
+          envFrom:
+            - configMapRef:
+                name: sovereignty-backend-config
+            - secretRef:
+                name: sovereignty-backend-secret
 ---
 apiVersion: v1
 kind: Service
