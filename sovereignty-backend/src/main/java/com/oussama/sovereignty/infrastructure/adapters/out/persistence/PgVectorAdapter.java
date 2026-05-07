@@ -24,7 +24,7 @@ public class PgVectorAdapter implements VectorStorePort {
     private final EntityManager entityManager;
 
     @Override
-    public void save(UUID documentId, String content) {
+    public void embed(UUID documentId, String content) {
 
         Document document = new Document(content, Map.of("documentId", documentId.toString()));
 
@@ -41,6 +41,19 @@ public class PgVectorAdapter implements VectorStorePort {
                 .executeUpdate();
     }
 
+    /**
+     * Performs a semantic similarity search against the vector store
+     * in order to retrieve the most relevant document chunks for a user question.
+     *
+     * <p>The question is automatically transformed into an embedding vector
+     * using the configured embedding model. The vector store then performs
+     * a nearest-neighbor similarity search against stored document embeddings
+     * and returns the Top-K most semantically relevant chunks.</p>
+     *
+     * @param question the user question
+     * @param limit the maximum number of similar chunks to retrieve (Top-K)
+     * @return a list containing the textual content of the most relevant chunks
+     */
     @Override
     public List<String> findTopSimilar(String question, int limit) {
         return pgVectorStore.similaritySearch(

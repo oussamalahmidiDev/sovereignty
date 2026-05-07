@@ -18,7 +18,6 @@ public class AskQuestionService implements AskQuestionUseCase {
 
     @Override
     public String ask(String question) {
-
         List<String> relevantContext = vectorStorePort.findTopSimilar(question, 5);
 
         return aiAgentPort.askQuestion(question, relevantContext);
