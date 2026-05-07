@@ -64,6 +64,11 @@ This starts:
 * Logstash
 * Kibana
 
+Important: Make sure you run the app with this profile:
+```text
+elk
+```
+
 ### 3. Frontend
 
 Run Angular frontend locally:
