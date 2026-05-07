@@ -36,7 +36,7 @@ public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
 
         return entities.stream()
                 .map(entity ->
-                        new Document(entity.getId(), entity.getFileName(), entity.getContentType(), entity.getStatus(), null, entity.getCreatedAt())
+                        new Document(entity.getId(), entity.getFileName(), entity.getContentType(), entity.getStatus(), entity.getCreatedAt())
                 )
                 .toList();
     }

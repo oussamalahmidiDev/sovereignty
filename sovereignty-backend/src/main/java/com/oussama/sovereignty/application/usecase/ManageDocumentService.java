@@ -32,7 +32,6 @@ public class ManageDocumentService implements ManageDocumentUseCase {
                 fileName,
                 contentType,
                 Document.DocumentStatus.UPLOADED,
-                content,
                 LocalDateTime.now()
         );
 

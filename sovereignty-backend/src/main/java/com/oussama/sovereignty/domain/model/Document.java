@@ -8,7 +8,6 @@ public record Document(
         String fileName,
         String contentType,
         DocumentStatus status,
-        byte[] content,
         LocalDateTime createdAt
 ) {
 
