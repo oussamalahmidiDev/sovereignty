@@ -34,7 +34,45 @@ docker exec -it sovereignty-kafka kafka-topics --create \
   --replication-factor 1
 ```
 
-## ☸️ Run with Kubernetes & Helm
+## Local Development
+
+### 1. Infrastructure
+
+The project uses **Spring Boot Docker Compose integration** for local development. 
+When starting the backend locally from IntelliJ or commandLine, Spring Boot automatically starts the required infrastructure defined in: 
+```text
+compose.yaml
+```
+This includes:
+* PostgreSQL + pgvector
+* Kafka
+
+### 2. ELK  & Monitoring (Optional)
+
+The ELK stack is isolated in a separate compose file:
+```text
+compose-elk.yaml
+```
+
+To start observability services manually:
+```bash
+docker compose -f compose-elk.yaml up -d
+```
+
+This starts:
+* Elasticsearch
+* Logstash
+* Kibana
+
+### 3. Frontend
+
+Run Angular frontend locally:
+```bash
+npm install
+npm start
+```
+
+## Run with Kubernetes & Helm
 
 ### 1. Overview
 
