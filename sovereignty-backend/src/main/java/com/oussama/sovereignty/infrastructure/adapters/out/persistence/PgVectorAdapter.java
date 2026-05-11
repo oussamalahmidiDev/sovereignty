@@ -1,6 +1,7 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.persistence;
 
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
+import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,7 @@ public class PgVectorAdapter implements VectorStorePort {
      * @return a list containing the textual content of the most relevant chunks
      */
     @Override
+    @TimedStep("rag.topK.duration")
     public List<String> findTopSimilar(String question, int limit) {
         return pgVectorStore.similaritySearch(
                         SearchRequest.builder().query(question).topK(limit).build()

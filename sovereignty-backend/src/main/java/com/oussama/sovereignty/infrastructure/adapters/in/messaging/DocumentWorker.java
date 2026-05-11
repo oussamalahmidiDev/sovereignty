@@ -5,6 +5,7 @@ import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.infrastructure.adapters.out.parsers.TextDocumentParserAdapter;
+import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
@@ -29,6 +30,7 @@ public class DocumentWorker {
 
 
     @KafkaListener(topics = DOCUMENT_UPLOADED_TOPIC, groupId = "sovereignty-group")
+    @TimedStep("rag.embed.duration")
     public void processDocument(Document document) {
         log.info("Vectorization of file : {}", document.fileName());
 

@@ -1,6 +1,7 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.ai;
 
 import com.oussama.sovereignty.application.ports.out.AiAgentPort;
+import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -18,6 +19,7 @@ public class SpringAiAdapter implements AiAgentPort {
     private final ChatModel chatModel;
 
     @Override
+    @TimedStep("rag.ask.duration")
     public String askQuestion(String userPrompt, List<String> context) {
 
         String systemPrompt = """
