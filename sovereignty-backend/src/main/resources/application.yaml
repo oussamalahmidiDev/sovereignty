@@ -16,7 +16,6 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -47,3 +46,15 @@ sovereignty:
   storage:
     provider: local
     path: ./storage
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers,threaddump,heapdump
+  metrics:
+    tags:
+      application: sovereignty-ai
+  tracing:
+    sampling:
+      probability: 1.0

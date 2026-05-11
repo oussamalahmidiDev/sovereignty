@@ -16,6 +16,7 @@
             <destination>localhost:5001</destination>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <customFields>{"app":"${appName}","env":"local"}</customFields>
+                <includeMdc>true</includeMdc>
             </encoder>
         </appender>
 
