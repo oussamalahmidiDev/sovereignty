@@ -1,0 +1,48 @@
+services:
+  tempo:
+    image: grafana/tempo:latest
+    container_name: sovereignty-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "3200:3200"
+      - "4318:4318"
+      - "4317:4317"
+    volumes:
+      - ./observability/tempo/tempo.yaml:/etc/tempo.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sovereignty-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sovereignty-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+
+  loki:
+    image: grafana/loki:latest
+    container_name: sovereignty-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: sovereignty-promtail
+    volumes:
+      - ./logs:/var/log/sovereignty
+      - ./observability/promtail/promtail.yml:/etc/promtail/promtail.yml
+    command: -config.file=/etc/promtail/promtail.yml
+    depends_on:
+      - loki

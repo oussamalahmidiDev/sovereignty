@@ -6,6 +6,7 @@ import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.domain.model.Document;
+import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class ManageDocumentService implements ManageDocumentUseCase {
     }
 
     @Override
+    @TimedStep("rag.findalldocs")
     public List<Document> findAllDocuments() {
         return documentRepository.findAllDocuments();
     }

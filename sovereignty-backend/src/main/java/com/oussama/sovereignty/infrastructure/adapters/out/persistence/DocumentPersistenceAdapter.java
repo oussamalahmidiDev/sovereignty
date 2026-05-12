@@ -4,6 +4,7 @@ import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.infrastructure.adapters.out.persistence.entities.DocumentEntity;
 import com.oussama.sovereignty.infrastructure.adapters.out.persistence.repositories.DocumentJpaRepository;
+import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
     private final DocumentJpaRepository repository;
 
     @Override
+    @TimedStep("rag.store")
     public void save(Document document) {
 
         DocumentEntity entity = DocumentEntity.builder()

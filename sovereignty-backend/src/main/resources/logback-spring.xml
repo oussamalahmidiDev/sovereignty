@@ -1,6 +1,34 @@
 <configuration>
     <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="sovereignty-backend"/>
 
+    <springProperty scope="context"
+                    name="LOG_FILE"
+                    source="logging.file.name"
+                    defaultValue="./logs/sovereignty-backend.log"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <level>level</level>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+            </fieldNames>
+
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>./logs/sovereignty-backend.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+
+    </appender>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} traceId=%X{traceId} spanId=%X{spanId} - %msg%n</pattern>
@@ -9,6 +37,7 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
 
     <springProfile name="elk">
@@ -23,6 +52,7 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="LOGSTASH"/>
+            <appender-ref ref="FILE"/>
         </root>
     </springProfile>
 </configuration>

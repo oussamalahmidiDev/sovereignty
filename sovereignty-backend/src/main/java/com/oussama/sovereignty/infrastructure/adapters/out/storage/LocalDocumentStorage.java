@@ -1,6 +1,7 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.storage;
 
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
+import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class LocalDocumentStorage implements DocumentStoragePort {
     }
 
     @Override
+    @TimedStep("rag.store")
     public void store(byte[] content, String fileName) {
         try {
             Files.write(this.rootLocation.resolve(fileName), content);
