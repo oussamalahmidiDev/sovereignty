@@ -27,13 +27,13 @@ public class SpringAiAdapter implements AiAgentPort {
                 If the answer is not found in context, abort the prompt.
                 """;
 
-        SystemPromptTemplate promptTemplate = new SystemPromptTemplate(systemPrompt);
-        var message = promptTemplate.createMessage(Map.of(
+        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(systemPrompt);
+        var systemMessage = systemPromptTemplate.createMessage(Map.of(
                 "context", String.join("\n", context)
         ));
         var userMessage = new UserMessage(userPrompt);
 
-        return chatModel.call(new Prompt(List.of(message, userMessage)))
+        return chatModel.call(new Prompt(List.of(systemMessage, userMessage)))
                 .getResult()
                 .getOutput()
                 .getText();

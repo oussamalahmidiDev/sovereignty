@@ -23,7 +23,10 @@ import static com.oussama.sovereignty.infrastructure.Constants.DOCUMENT_UPLOADED
 public class DocumentWorker {
 
     private final DocumentStoragePort storagePort;
+
     private final List<DocumentParserPort> parsers;
+    private final TextDocumentParserAdapter defaultParserAdapter;
+
     private final VectorStorePort vectorStorePort;
 
     private final TokenTextSplitter textSplitter = new TokenTextSplitter();
@@ -40,7 +43,7 @@ public class DocumentWorker {
         DocumentParserPort parser = parsers.stream()
                 .filter(documentParserPort -> documentParserPort.supports(extension))
                 .findFirst()
-                .orElseGet(TextDocumentParserAdapter::new);
+                .orElse(defaultParserAdapter);
 
         // Extract content from the file.
         String rawText = parser.parse(content);
