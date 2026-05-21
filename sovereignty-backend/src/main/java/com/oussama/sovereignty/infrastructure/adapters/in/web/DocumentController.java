@@ -1,11 +1,10 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.web;
 
-import com.oussama.sovereignty.application.usecase.DocumentStatusService;
 import com.oussama.sovereignty.application.usecase.ManageDocumentService;
-import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.request.DocumentDeletionRequest;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.AcceptedResponse;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.DocumentResponse;
+import com.oussama.sovereignty.infrastructure.adapters.out.sse.DocumentStatusNotificationAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -25,7 +23,7 @@ import java.util.UUID;
 public class DocumentController {
 
     private final ManageDocumentService manageDocumentService;
-    private final DocumentStatusService documentStatusService;
+    private final DocumentStatusNotificationAdapter documentStatusNotificationAdapter;
 
     @PostMapping("/upload")
     public ResponseEntity<AcceptedResponse> uploadDocument(@RequestParam("file") MultipartFile file) {
@@ -68,7 +66,7 @@ public class DocumentController {
 
     @GetMapping("/{documentId}/subscribe")
     public SseEmitter subscribeToDocumentStatus(@PathVariable String documentId) {
-        return documentStatusService.subscribe(documentId);
+        return documentStatusNotificationAdapter.subscribe(documentId);
     }
 
     @DeleteMapping

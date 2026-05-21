@@ -1,5 +1,6 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.messaging;
 
+import com.oussama.sovereignty.application.ports.in.ManageDocumentStatusUseCase;
 import com.oussama.sovereignty.application.ports.out.DocumentParserPort;
 import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
@@ -31,10 +32,8 @@ public class DocumentWorker {
     private final TextDocumentParserAdapter defaultParserAdapter;
 
     private final VectorStorePort vectorStorePort;
-    private final DocumentRepositoryPort documentRepositoryPort;
 
-    // to be refactored, broke Hexa architecture
-    private final DocumentStatusService documentStatusService;
+    private final ManageDocumentStatusUseCase manageDocumentStatusUseCase;
 
 
     private final TokenTextSplitter textSplitter = new TokenTextSplitter();
@@ -47,7 +46,7 @@ public class DocumentWorker {
             log.info("Vectorization of file : {}", document.fileName());
 
             // mark as processing
-            documentStatusService.updateDocumentStatus(document, DocumentStatus.PROCESSING);
+            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.PROCESSING);
 
             byte[] content = storagePort.load(document.fileName());
             String extension = document.fileName().substring(document.fileName().lastIndexOf(".") + 1);
@@ -72,13 +71,13 @@ public class DocumentWorker {
             }
 
             // mark as ready
-            documentStatusService.updateDocumentStatus(document, DocumentStatus.READY);
+            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.READY);
 
             log.info("Vectorisation is finished successfully : {}", document.fileName());
         } catch (Exception ex) {
             log.error("Error while processing document {}", document.fileName(), ex);
 
-            documentStatusService.updateDocumentStatus(document, DocumentStatus.FAILED);
+            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.FAILED);
         }
 
     }

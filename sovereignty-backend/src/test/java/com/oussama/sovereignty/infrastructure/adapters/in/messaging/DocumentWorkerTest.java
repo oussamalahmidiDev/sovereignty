@@ -1,5 +1,6 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.messaging;
 
+import com.oussama.sovereignty.application.ports.in.ManageDocumentStatusUseCase;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.domain.model.Document;
@@ -23,17 +24,20 @@ class DocumentWorkerTest {
     private final DocumentStoragePort documentStoragePort;
     private final TextDocumentParserAdapter documentParserPort;
     private final VectorStorePort vectorStorePort;
+    private final ManageDocumentStatusUseCase manageDocumentStatusUseCase;
 
     DocumentWorkerTest() {
         this.documentStoragePort = mock(DocumentStoragePort.class);
         this.documentParserPort = mock(TextDocumentParserAdapter.class);
         this.vectorStorePort = mock(VectorStorePort.class);
+        this.manageDocumentStatusUseCase = mock(ManageDocumentStatusUseCase.class);
 
         this.documentWorker = new DocumentWorker(
                 documentStoragePort,
                 List.of(documentParserPort),
                 documentParserPort,
-                vectorStorePort
+                vectorStorePort,
+                manageDocumentStatusUseCase
         );
     }
 
@@ -41,6 +45,8 @@ class DocumentWorkerTest {
     void processDocument() {
 
         when(documentParserPort.parse(any())).thenReturn("Hello\nWorld");
+
+        doNothing().when(manageDocumentStatusUseCase).updateDocumentStatus(any(), any());
 
         Document document = new Document(
                 UUID.randomUUID(),
