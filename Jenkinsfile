@@ -59,9 +59,6 @@ pipeline {
         }
 
         stage('Deploy Local K8s') {
-            when {
-                branch 'main'
-            }
             steps {
                 sh '''
                   helm upgrade --install sovereignty ./helm/sovereignty \
