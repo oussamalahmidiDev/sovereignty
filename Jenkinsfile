@@ -13,6 +13,23 @@ pipeline {
             }
         }
 
+        stage('Debug Java/Maven') {
+            steps {
+                dir('sovereignty-backend') {
+                    sh '''
+                      echo "PATH=$PATH"
+                      echo "JAVA_HOME=$JAVA_HOME"
+
+                      which java
+                      java -version
+
+                      which mvn
+                      mvn -version
+                    '''
+                }
+            }
+        }
+
         stage('Backend - Test & Build') {
             steps {
                 dir('sovereignty-backend') {
