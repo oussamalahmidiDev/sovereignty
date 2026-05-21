@@ -1,12 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'java-21'
-        maven 'maven-3.9'
-        nodejs 'node-20'
-    }
-
     environment {
         BACKEND_IMAGE = 'sovereignty-backend'
         FRONTEND_IMAGE = 'sovereignty-frontend'
