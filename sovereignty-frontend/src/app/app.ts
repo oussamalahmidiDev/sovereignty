@@ -1,6 +1,7 @@
 import {Component, effect, inject} from '@angular/core';
 import {ChatService} from './services/chat.service';
 import {DocumentService} from './services/document.service';
+import {HealthService} from './services/health.service';
 
 @Component({
   selector: 'app-root',
@@ -11,6 +12,7 @@ export class App {
 
   public chatService = inject(ChatService);
   public documentService = inject(DocumentService);
+  public healthService = inject(HealthService);
 
   constructor() {
     effect(() => {

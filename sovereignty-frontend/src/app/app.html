@@ -62,9 +62,15 @@
         <div class="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-indigo-200 shadow-lg">S</div>
         <div>
           <h1 class="font-bold text-sm md:text-base leading-tight">Sovereignty Assistant</h1>
-          <p class="text-[10px] text-green-500 font-bold flex items-center gap-1">
-            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> LOCAL ENGINE READY
-          </p>
+          @if (healthService.isHealthy()) {
+            <p class="text-[10px] text-green-500 font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> LOCAL ENGINE READY
+            </p>
+          } @else {
+            <p class="text-[10px] text-orange-500 font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span> Something is not right, check the logs
+            </p>
+          }
         </div>
       </div>
     </header>
