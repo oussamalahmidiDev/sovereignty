@@ -48,8 +48,13 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -f Dockerfile-ci -t $BACKEND_IMAGE:latest ./sovereignty-backend'
-                sh 'docker build -t $FRONTEND_IMAGE:latest ./sovereignty-frontend'
+                dir('sovereignty-backend') {
+                    sh 'docker build -f Dockerfile-ci -t sovereignty-backend:latest .'
+                }
+
+                dir('sovereignty-frontend') {
+                    sh 'docker build -t $FRONTEND_IMAGE:latest .'
+                }
             }
         }
 
