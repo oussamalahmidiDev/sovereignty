@@ -15,7 +15,7 @@ pipeline {
 
         stage('Backend - Test & Build') {
             steps {
-                dir('backend') {
+                dir('sovereignty-backend') {
                     sh 'mvn clean verify'
                 }
             }
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Frontend - Install & Build') {
             steps {
-                dir('frontend') {
+                dir('sovereignty-frontend') {
                     sh 'npm ci'
                 }
             }
