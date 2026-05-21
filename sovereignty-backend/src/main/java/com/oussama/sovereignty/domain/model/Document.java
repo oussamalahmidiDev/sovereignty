@@ -11,8 +11,21 @@ public record Document(
         LocalDateTime createdAt
 ) {
 
+    public Document copyAndChangeStatus(DocumentStatus newStatus) {
+        return new Document(
+                id(),
+                fileName(),
+                contentType(),
+                newStatus,
+                createdAt()
+        );
+    }
+
     public enum DocumentStatus {
-        UPLOADED;
+        UPLOADED,
+        PROCESSING,
+        READY,
+        FAILED;
     }
 
 }

@@ -1,9 +1,12 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.messaging;
 
 import com.oussama.sovereignty.application.ports.out.DocumentParserPort;
+import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
+import com.oussama.sovereignty.application.usecase.DocumentStatusService;
 import com.oussama.sovereignty.domain.model.Document;
+import com.oussama.sovereignty.domain.model.Document.DocumentStatus;
 import com.oussama.sovereignty.infrastructure.adapters.out.parsers.TextDocumentParserAdapter;
 import com.oussama.sovereignty.infrastructure.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,11 @@ public class DocumentWorker {
     private final TextDocumentParserAdapter defaultParserAdapter;
 
     private final VectorStorePort vectorStorePort;
+    private final DocumentRepositoryPort documentRepositoryPort;
+
+    // to be refactored, broke Hexa architecture
+    private final DocumentStatusService documentStatusService;
+
 
     private final TokenTextSplitter textSplitter = new TokenTextSplitter();
 
@@ -35,30 +43,43 @@ public class DocumentWorker {
     @KafkaListener(topics = DOCUMENT_UPLOADED_TOPIC, groupId = "sovereignty-group")
     @TimedStep("rag.embed.duration")
     public void processDocument(Document document) {
-        log.info("Vectorization of file : {}", document.fileName());
+        try {
+            log.info("Vectorization of file : {}", document.fileName());
 
-        byte[] content = storagePort.load(document.fileName());
-        String extension = document.fileName().substring(document.fileName().lastIndexOf(".") + 1);
+            // mark as processing
+            documentStatusService.updateDocumentStatus(document, DocumentStatus.PROCESSING);
 
-        DocumentParserPort parser = parsers.stream()
-                .filter(documentParserPort -> documentParserPort.supports(extension))
-                .findFirst()
-                .orElse(defaultParserAdapter);
+            byte[] content = storagePort.load(document.fileName());
+            String extension = document.fileName().substring(document.fileName().lastIndexOf(".") + 1);
 
-        // Extract content from the file.
-        String rawText = parser.parse(content);
+            DocumentParserPort parser = parsers.stream()
+                    .filter(documentParserPort -> documentParserPort.supports(extension))
+                    .findFirst()
+                    .orElse(defaultParserAdapter);
 
-        // Split the content into small chunks
-        var textChunks = textSplitter.split(
-                new org.springframework.ai.document.Document(rawText, Map.of("documentId", document.id().toString()))
-        );
-        log.info("Document is splitted in {} chunks.", textChunks.size());
+            // Extract content from the file.
+            String rawText = parser.parse(content);
 
-        // Here where vectorization happens, the implementation it will call the embedding model
-        for (var chunk : textChunks) {
-            vectorStorePort.embed(document.id(), chunk.getText());
+            // Split the content into small chunks
+            var textChunks = textSplitter.split(
+                    new org.springframework.ai.document.Document(rawText, Map.of("documentId", document.id().toString()))
+            );
+            log.info("Document is splitted in {} chunks.", textChunks.size());
+
+            // Here where vectorization happens, the implementation it will call the embedding model
+            for (var chunk : textChunks) {
+                vectorStorePort.embed(document.id(), chunk.getText());
+            }
+
+            // mark as ready
+            documentStatusService.updateDocumentStatus(document, DocumentStatus.READY);
+
+            log.info("Vectorisation is finished successfully : {}", document.fileName());
+        } catch (Exception ex) {
+            log.error("Error while processing document {}", document.fileName(), ex);
+
+            documentStatusService.updateDocumentStatus(document, DocumentStatus.FAILED);
         }
 
-        log.info("Vectorisation is finished successfully : {}", document.fileName());
     }
 }

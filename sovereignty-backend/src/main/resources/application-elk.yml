@@ -1,0 +1,7 @@
+management:
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+logging:
+  file:
+    name: logs/sovereignty-backend.log

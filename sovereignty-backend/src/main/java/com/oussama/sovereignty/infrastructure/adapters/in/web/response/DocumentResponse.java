@@ -7,6 +7,7 @@ public record DocumentResponse(
         UUID id,
         String fileName,
         String fileType,
+        String status,
         LocalDateTime createdAt
 ) {
 }
