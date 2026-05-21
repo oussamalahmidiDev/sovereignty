@@ -61,7 +61,7 @@ pipeline {
         stage('Deploy Local K8s') {
             steps {
                 sh '''
-                  helm upgrade --install sovereignty ./helm/sovereignty \
+                  helm upgrade --install sovereignty ./helm/ \
                     --set backend.image=$BACKEND_IMAGE:latest \
                     --set frontend.image=$FRONTEND_IMAGE:latest
                 '''
