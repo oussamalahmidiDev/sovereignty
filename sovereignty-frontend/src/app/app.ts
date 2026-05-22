@@ -1,4 +1,5 @@
-import {Component, effect, inject, signal} from '@angular/core';
+import {isPlatformBrowser} from '@angular/common';
+import {Component, ElementRef, PLATFORM_ID, ViewChild, effect, inject, signal} from '@angular/core';
 import {ChatService} from './services/chat.service';
 import {DocumentService} from './services/document.service';
 import {HealthService} from './services/health.service';
@@ -13,16 +14,48 @@ export class App {
   public chatService = inject(ChatService);
   public documentService = inject(DocumentService);
   public healthService = inject(HealthService);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  @ViewChild('chatScrollContainer') private chatScrollContainer?: ElementRef<HTMLElement>;
 
   // Error Details Modal state
   selectedTraceId = signal<string | null>(null);
   selectedFailureReason = signal<string | null>(null);
   showErrorModal = signal<boolean>(false);
   copySuccess = signal<boolean>(false);
+  private scrollAnimationFrame?: number;
 
   constructor() {
     effect(() => {
       this.documentService.fetchDocuments();
+    });
+
+    effect(() => {
+      this.chatService.messages().map(message => message.message).join('');
+      this.chatService.showLoadingBubble();
+      this.scheduleChatScrollToBottom();
+    });
+  }
+
+  private scheduleChatScrollToBottom() {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    if (this.scrollAnimationFrame) {
+      cancelAnimationFrame(this.scrollAnimationFrame);
+    }
+
+    this.scrollAnimationFrame = requestAnimationFrame(() => {
+      const container = this.chatScrollContainer?.nativeElement;
+      if (!container) {
+        return;
+      }
+
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'auto',
+      });
     });
   }
 
