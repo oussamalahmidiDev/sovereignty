@@ -8,6 +8,8 @@ import com.oussama.sovereignty.infrastructure.adapters.in.web.request.DocumentDe
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.AcceptedResponse;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.DocumentResponse;
 import com.oussama.sovereignty.infrastructure.adapters.out.sse.DocumentStatusNotificationAdapter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ContentDisposition;
@@ -30,13 +32,15 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor @Slf4j
+@Tag(name = "Documents", description = "Endpoints for uploading, listing, downloading, and deleting indexable documents")
 public class DocumentController {
 
     private final ManageDocumentService manageDocumentService;
     private final DocumentStatusNotificationAdapter documentStatusNotificationAdapter;
     private final DocumentEventRepositoryPort documentEventRepositoryPort;
 
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload and index a document", description = "Uploads a text or markdown file, extracts its chunks, generates embeddings, and saves them to the pgvector database.")
     public ResponseEntity<AcceptedResponse> uploadDocument(@RequestParam("file") MultipartFile file) {
         log.info("Received a new file : {} ({})", file.getOriginalFilename(), file.getContentType());
 
@@ -62,6 +66,7 @@ public class DocumentController {
     }
 
     @GetMapping
+    @Operation(summary = "List all documents", description = "Retrieves a list of all uploaded documents along with their processing status and any failure details.")
     public ResponseEntity<List<DocumentResponse>> getAllDocuments() {
         List<Document> documents = manageDocumentService.findAllDocuments();
         List<UUID> documentIds = documents.stream().map(Document::id).toList();
@@ -88,11 +93,13 @@ public class DocumentController {
     }
 
     @GetMapping("/{documentId}/subscribe")
+    @Operation(summary = "Subscribe to document status updates", description = "Establishes a Server-Sent Events (SSE) connection to receive real-time updates on a document's processing status.")
     public SseEmitter subscribeToDocumentStatus(@PathVariable String documentId) {
         return documentStatusNotificationAdapter.subscribe(documentId);
     }
 
     @GetMapping("/{documentId}/download")
+    @Operation(summary = "Download raw document", description = "Downloads the original raw text/markdown file content for a given document ID.")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable UUID documentId) {
         try {
             DownloadedDocument document = manageDocumentService.downloadDocument(documentId);
@@ -103,7 +110,7 @@ public class DocumentController {
             return ResponseEntity.ok()
                     .contentType(contentType)
                     .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                            .filename(document.fileName())
+                             .filename(document.fileName())
                             .build()
                             .toString())
                     .body(document.content());
@@ -113,6 +120,7 @@ public class DocumentController {
     }
 
     @DeleteMapping
+    @Operation(summary = "Delete a document", description = "Removes a document from the system, deleting both its raw content, metadata, and all vector store embeddings.")
     public void deleteDocument(@RequestBody DocumentDeletionRequest request) {
         manageDocumentService.deleteDocument(request.id(), request.fileName());
     }
