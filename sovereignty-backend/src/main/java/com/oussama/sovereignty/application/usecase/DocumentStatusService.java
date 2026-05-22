@@ -6,9 +6,11 @@ import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStatusNotificationPort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.domain.model.Document.DocumentStatus;
+import com.oussama.sovereignty.application.common.UseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@UseCase
 @Slf4j
 @RequiredArgsConstructor
 public class DocumentStatusService implements ManageDocumentStatusUseCase {

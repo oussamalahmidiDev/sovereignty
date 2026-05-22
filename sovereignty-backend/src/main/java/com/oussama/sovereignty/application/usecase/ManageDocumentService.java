@@ -9,12 +9,15 @@ import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.application.aop.TimedStep;
 import com.oussama.sovereignty.application.ports.out.TraceContextPort;
+import com.oussama.sovereignty.application.common.UseCase;
+import com.oussama.sovereignty.application.common.DomainTransactional;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@UseCase
 @RequiredArgsConstructor
 public class ManageDocumentService implements ManageDocumentUseCase {
 
@@ -26,6 +29,7 @@ public class ManageDocumentService implements ManageDocumentUseCase {
     private final TraceContextPort traceContextPort;
 
     @Override
+    @DomainTransactional
     public void importDocument(String fileName, String contentType, byte[] content) {
 
         Document document = new Document(
@@ -53,6 +57,7 @@ public class ManageDocumentService implements ManageDocumentUseCase {
     }
 
     @Override
+    @DomainTransactional
     public void deleteDocument(UUID id, String fileName) {
         documentRepository.deleteDocument(id);
 
