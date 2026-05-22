@@ -1,5 +1,6 @@
 import {computed, inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
+import {Observable} from 'rxjs';
 import {environment} from '../../environments/environment';
 
 export interface ChatMessage {
@@ -101,7 +102,7 @@ export class ChatService {
     this.loading.set(false);
   }
 
-  async askQuestion(question: string) {
+  askQuestion(question: string) {
     this.messages.update(
       lastMessages => [...lastMessages, {message: question, isUser: true}]
     );
@@ -114,129 +115,132 @@ export class ChatService {
       lastMessages => [...lastMessages, {message: '', isUser: false}]
     );
 
-    try {
-      const response = await fetch(this.STREAM_API_URL, {
+    let assistantText = '';
+
+    this.ssePost<AnswerResponse>(this.STREAM_API_URL, 
+      { question, chatId: this.selectedChatId() }, 
+      this.abortController.signal
+    ).subscribe({
+      next: (data) => {
+        if (data.chatId) {
+          this.selectedChatId.set(data.chatId);
+        }
+        if (data.response) {
+          assistantText += data.response;
+          this.messages.update(lastMessages => {
+            const updated = [...lastMessages];
+            if (updated.length > 0) {
+              updated[updated.length - 1] = { message: assistantText, isUser: false };
+            }
+            return updated;
+          });
+        }
+      },
+      error: (err) => {
+        if (err.name === 'AbortError') {
+          console.log('Streaming aborted by user.');
+          this.messages.update(prev => {
+            const lastMsg = prev[prev.length - 1];
+            if (lastMsg && !lastMsg.isUser && !lastMsg.message) {
+              // Remove the empty assistant message
+              return prev.slice(0, -1);
+            }
+            return prev;
+          });
+        } else {
+          console.error('Error API:', err);
+          this.messages.update(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) {
+              updated[updated.length - 1] = { message: "Server unavailable.", isUser: false };
+            }
+            return updated;
+          });
+        }
+        this.abortController = null;
+        this.loading.set(false);
+        this.fetchChats();
+      },
+      complete: () => {
+        this.abortController = null;
+        this.loading.set(false);
+        this.fetchChats();
+      }
+    });
+  }
+
+  private ssePost<T>(url: string, body: any, signal?: AbortSignal): Observable<T> {
+    return new Observable<T>(observer => {
+      fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream'
         },
-        body: JSON.stringify({ question, chatId: this.selectedChatId() }),
-        signal: this.abortController.signal
-      });
+        body: JSON.stringify(body),
+        signal
+      }).then(async response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) {
+          throw new Error('ReadableStream not supported in response');
+        }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+        let done = false;
+        let buffer = '';
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      if (!reader) {
-        throw new Error('ReadableStream not supported in response');
-      }
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          if (value) {
+            buffer += decoder.decode(value, { stream: !done });
+            const events = buffer.split('\n\n');
+            buffer = events.pop() || '';
 
-      let done = false;
-      let assistantText = '';
-      let buffer = '';
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        if (value) {
-          buffer += decoder.decode(value, { stream: !done });
-          
-          // SSE events are separated by double newlines \n\n
-          const events = buffer.split('\n\n');
-          // The last element might be an incomplete chunk, keep it in the buffer
-          buffer = events.pop() || '';
-
-          for (const event of events) {
-            const lines = event.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data:')) {
-                const dataStr = line.slice(5).trim();
-                if (dataStr) {
-                  try {
-                    const dataObj = JSON.parse(dataStr);
-                    if (dataObj && dataObj.chatId) {
-                      this.selectedChatId.set(dataObj.chatId);
+            for (const event of events) {
+              const lines = event.split('\n');
+              for (const line of lines) {
+                if (line.startsWith('data:')) {
+                  const dataStr = line.slice(5).trim();
+                  if (dataStr) {
+                    try {
+                      const dataObj = JSON.parse(dataStr) as T;
+                      observer.next(dataObj);
+                    } catch (e) {
+                      console.warn('Error parsing SSE event data:', e, dataStr);
                     }
-                    if (dataObj && dataObj.response) {
-                      assistantText += dataObj.response;
-                      this.messages.update(lastMessages => {
-                        const updated = [...lastMessages];
-                        if (updated.length > 0) {
-                          updated[updated.length - 1] = { message: assistantText, isUser: false };
-                        }
-                        return updated;
-                      });
-                    }
-                  } catch (e) {
-                    console.warn('Error parsing SSE event data:', e, dataStr);
                   }
                 }
               }
             }
           }
         }
-      }
 
-      // If anything remains in the buffer after stream closes
-      if (buffer) {
-        const lines = buffer.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data:')) {
-            const dataStr = line.slice(5).trim();
-            if (dataStr) {
-              try {
-                const dataObj = JSON.parse(dataStr);
-                if (dataObj && dataObj.chatId) {
-                  this.selectedChatId.set(dataObj.chatId);
+        if (buffer) {
+          const lines = buffer.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data:')) {
+              const dataStr = line.slice(5).trim();
+              if (dataStr) {
+                try {
+                  const dataObj = JSON.parse(dataStr) as T;
+                  observer.next(dataObj);
+                } catch (e) {
+                  console.warn('Error parsing final SSE event data:', e, dataStr);
                 }
-                if (dataObj && dataObj.response) {
-                  assistantText += dataObj.response;
-                  this.messages.update(lastMessages => {
-                    const updated = [...lastMessages];
-                    if (updated.length > 0) {
-                      updated[updated.length - 1] = { message: assistantText, isUser: false };
-                    }
-                    return updated;
-                  });
-                }
-              } catch (e) {
-                console.warn('Error parsing final SSE event data:', e, dataStr);
               }
             }
           }
         }
-      }
 
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        console.log('Streaming aborted by user.');
-        this.messages.update(prev => {
-          const lastMsg = prev[prev.length - 1];
-          if (lastMsg && !lastMsg.isUser && !lastMsg.message) {
-            // Remove the empty assistant message
-            return prev.slice(0, -1);
-          }
-          return prev;
-        });
-      } else {
-        console.error('Error API:', err);
-        this.messages.update(prev => {
-          const updated = [...prev];
-          if (updated.length > 0) {
-            updated[updated.length - 1] = { message: "Server unavailable.", isUser: false };
-          }
-          return updated;
-        });
-      }
-    } finally {
-      this.abortController = null;
-      this.loading.set(false);
-      this.fetchChats();
-    }
+        observer.complete();
+      }).catch(err => {
+        observer.error(err);
+      });
+    });
   }
 
 }
