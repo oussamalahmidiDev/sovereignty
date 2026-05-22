@@ -2,7 +2,12 @@ package com.oussama.sovereignty.application.ports.in;
 
 import com.oussama.sovereignty.application.common.StreamCallback;
 
+import java.util.UUID;
+
 public interface AskQuestionUseCase {
-    String ask(String question);
-    void streamAnswer(String question, StreamCallback callback);
+    Answer ask(UUID chatId, String question);
+    UUID streamAnswer(UUID chatId, String question, StreamCallback callback);
+
+    record Answer(UUID chatId, String response) {
+    }
 }

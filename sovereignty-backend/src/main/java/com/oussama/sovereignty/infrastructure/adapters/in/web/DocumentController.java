@@ -28,7 +28,6 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor @Slf4j
 public class DocumentController {

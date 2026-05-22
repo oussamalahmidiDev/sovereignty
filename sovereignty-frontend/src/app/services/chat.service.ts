@@ -8,7 +8,23 @@ export interface ChatMessage {
 }
 
 export interface AnswerResponse {
-  response: string
+  response: string;
+  chatId: string;
+}
+
+export interface ChatSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessageResponse {
+  id: string;
+  chatId: string;
+  role: 'USER' | 'ASSISTANT';
+  content: string;
+  createdAt: string;
 }
 
 @Injectable({
@@ -16,9 +32,13 @@ export interface AnswerResponse {
 })
 export class ChatService {
 
-  private readonly API_URL = `${environment.apiUrl}/api/chat/ask/stream`;
+  private readonly API_URL = `${environment.apiUrl}/api/chat`;
+  private readonly STREAM_API_URL = `${this.API_URL}/ask/stream`;
+  private readonly httpClient = inject(HttpClient);
 
   messages = signal<ChatMessage[]>([]);
+  chats = signal<ChatSummary[]>([]);
+  selectedChatId = signal<string | null>(null);
   loading = signal<boolean>(false);
 
   showLoadingBubble = computed(() => {
@@ -34,6 +54,44 @@ export class ChatService {
   });
 
   private abortController: AbortController | null = null;
+
+  fetchChats() {
+    return this.httpClient.get<ChatSummary[]>(this.API_URL).subscribe({
+      next: response => this.chats.set(response),
+      error: err => console.log('Error fetching chats')
+    });
+  }
+
+  selectChat(chat: ChatSummary) {
+    this.selectedChatId.set(chat.id);
+
+    return this.httpClient.get<ChatMessageResponse[]>(`${this.API_URL}/${chat.id}/messages`).subscribe({
+      next: response => {
+        this.messages.set(response.map(message => ({
+          message: message.content,
+          isUser: message.role === 'USER'
+        })));
+      },
+      error: err => console.log('Error fetching chat messages')
+    });
+  }
+
+  startNewChat() {
+    this.selectedChatId.set(null);
+    this.messages.set([]);
+  }
+
+  deleteChat(chat: ChatSummary) {
+    return this.httpClient.delete(`${this.API_URL}/${chat.id}`).subscribe({
+      next: () => {
+        this.chats.update(chats => chats.filter(existingChat => existingChat.id !== chat.id));
+        if (this.selectedChatId() === chat.id) {
+          this.startNewChat();
+        }
+      },
+      error: err => console.log('Error deleting chat')
+    });
+  }
 
   stopGeneration() {
     if (this.abortController) {
@@ -57,13 +115,13 @@ export class ChatService {
     );
 
     try {
-      const response = await fetch(this.API_URL, {
+      const response = await fetch(this.STREAM_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream'
         },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, chatId: this.selectedChatId() }),
         signal: this.abortController.signal
       });
 
@@ -100,6 +158,9 @@ export class ChatService {
                 if (dataStr) {
                   try {
                     const dataObj = JSON.parse(dataStr);
+                    if (dataObj && dataObj.chatId) {
+                      this.selectedChatId.set(dataObj.chatId);
+                    }
                     if (dataObj && dataObj.response) {
                       assistantText += dataObj.response;
                       this.messages.update(lastMessages => {
@@ -129,6 +190,9 @@ export class ChatService {
             if (dataStr) {
               try {
                 const dataObj = JSON.parse(dataStr);
+                if (dataObj && dataObj.chatId) {
+                  this.selectedChatId.set(dataObj.chatId);
+                }
                 if (dataObj && dataObj.response) {
                   assistantText += dataObj.response;
                   this.messages.update(lastMessages => {
@@ -171,8 +235,8 @@ export class ChatService {
     } finally {
       this.abortController = null;
       this.loading.set(false);
+      this.fetchChats();
     }
   }
 
 }
-

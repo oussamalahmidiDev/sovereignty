@@ -17,6 +17,7 @@ export class App {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   @ViewChild('chatScrollContainer') private chatScrollContainer?: ElementRef<HTMLElement>;
+  @ViewChild('userInput') private userInput?: ElementRef<HTMLInputElement>;
 
   // Error Details Modal state
   selectedTraceId = signal<string | null>(null);
@@ -26,6 +27,10 @@ export class App {
   private scrollAnimationFrame?: number;
 
   constructor() {
+    effect(() => {
+      this.chatService.fetchChats();
+    });
+
     effect(() => {
       this.documentService.fetchDocuments();
     });
@@ -91,6 +96,17 @@ export class App {
 
       inputElement.value = '';
     }
+  }
+
+  startNewChat() {
+    this.chatService.startNewChat();
+    requestAnimationFrame(() => {
+      const inputElement = this.userInput?.nativeElement;
+      if (inputElement) {
+        inputElement.value = '';
+        inputElement.focus();
+      }
+    });
   }
 
   onFileSelected(event: any) {
