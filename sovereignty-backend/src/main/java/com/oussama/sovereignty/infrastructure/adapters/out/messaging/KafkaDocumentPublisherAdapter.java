@@ -2,13 +2,9 @@ package com.oussama.sovereignty.infrastructure.adapters.out.messaging;
 
 import com.oussama.sovereignty.application.ports.out.DocumentEventPublisherPort;
 import com.oussama.sovereignty.domain.model.Document;
-import io.micrometer.core.ipc.http.HttpSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-
-import java.util.HashSet;
-import java.util.TreeSet;
 
 import static com.oussama.sovereignty.infrastructure.Constants.DOCUMENT_UPLOADED_TOPIC;
 

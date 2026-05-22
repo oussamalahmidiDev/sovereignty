@@ -1,6 +1,5 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.web;
 
-import com.oussama.sovereignty.application.usecase.HealthCheckService;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.HealthStatusResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

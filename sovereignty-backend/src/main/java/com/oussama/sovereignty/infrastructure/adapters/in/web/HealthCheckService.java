@@ -1,4 +1,4 @@
-package com.oussama.sovereignty.application.usecase;
+package com.oussama.sovereignty.infrastructure.adapters.in.web;
 
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.HealthStatusResponse;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.HealthStatusResponse.HealthStatus;

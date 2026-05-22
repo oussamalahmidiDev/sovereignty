@@ -35,14 +35,23 @@
               <!-- icon -->
             </div>
             <span class="text-xs font-medium text-slate-600 truncate">{{ document.fileName }}</span>
-            <span class="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  [class]="
-          document.status === 'READY' ? 'bg-green-100 text-green-700' :
-          document.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-          document.status === 'FAILED' ? 'bg-orange-100 text-orange-800' :
-          'bg-slate-100 text-slate-600'">
-              {{ document.status }}
-            </span>
+            @if (document.status === 'FAILED') {
+              <button (click)="openErrorModal(document.traceId, document.failureReason)"
+                      class="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors cursor-pointer border-0 outline-none flex items-center gap-1 shadow-sm">
+                {{ document.status }}
+                <svg class="w-2.5 h-2.5 text-orange-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            } @else {
+              <span class="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    [class]="
+            document.status === 'READY' ? 'bg-green-100 text-green-700' :
+            document.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-slate-100 text-slate-600'">
+                {{ document.status }}
+              </span>
+            }
           </div>
 
           <button (click)="documentService.deleteDocument(document)"
@@ -141,3 +150,60 @@
 
   </main>
 </div>
+
+@if (showErrorModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-200">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden transform scale-95 transition-all animate-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-orange-50/50">
+        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm md:text-base">
+          <svg class="w-5 h-5 text-orange-600 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          Processing Error
+        </h3>
+        <button (click)="closeErrorModal()" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6 space-y-4">
+        <div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Description</p>
+          <p class="text-sm font-semibold text-slate-700 bg-red-50/70 border border-red-100 p-3.5 rounded-xl break-words whitespace-pre-wrap leading-relaxed">failed processing document</p>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Failure Reason</p>
+          <p class="text-xs text-slate-600 bg-slate-50 border border-slate-100 p-3.5 rounded-xl break-words whitespace-pre-wrap leading-relaxed font-mono select-text">{{ selectedFailureReason() }}</p>
+        </div>
+        
+        <div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Trace ID</p>
+          <div class="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <code class="text-[11px] font-mono text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 select-all break-all flex-1">{{ selectedTraceId() }}</code>
+            @if (selectedTraceId() && selectedTraceId() !== 'N/A') {
+              <button (click)="copyTraceId()" 
+                      class="flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg transition-all duration-200 select-none"
+                      [class]="copySuccess() ? 'bg-green-100 text-green-700 font-bold' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600'">
+                {{ copySuccess() ? 'Copied!' : 'Copy' }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <button (click)="closeErrorModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm">
+          Dismiss
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

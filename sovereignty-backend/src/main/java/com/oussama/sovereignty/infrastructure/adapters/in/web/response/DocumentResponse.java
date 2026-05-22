@@ -8,6 +8,8 @@ public record DocumentResponse(
         String fileName,
         String fileType,
         String status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String traceId,
+        String failureReason
 ) {
 }

@@ -1,4 +1,4 @@
-package com.oussama.sovereignty.infrastructure.aop;
+package com.oussama.sovereignty.application.aop;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

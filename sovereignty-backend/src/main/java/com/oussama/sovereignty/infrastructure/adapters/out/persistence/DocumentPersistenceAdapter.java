@@ -4,7 +4,7 @@ import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.infrastructure.adapters.out.persistence.entities.DocumentEntity;
 import com.oussama.sovereignty.infrastructure.adapters.out.persistence.repositories.DocumentJpaRepository;
-import com.oussama.sovereignty.infrastructure.aop.TimedStep;
+import com.oussama.sovereignty.application.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +34,7 @@ public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
 
     @Override
     public List<Document> findAllDocuments() {
-        List<DocumentEntity> entities = repository.findAll();
+        List<DocumentEntity> entities = repository.findAllByOrderByCreatedAtDesc();
 
         return entities.stream()
                 .map(entity ->

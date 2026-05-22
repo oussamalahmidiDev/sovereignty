@@ -1,7 +1,7 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.persistence;
 
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
-import com.oussama.sovereignty.infrastructure.aop.TimedStep;
+import com.oussama.sovereignty.application.aop.TimedStep;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;

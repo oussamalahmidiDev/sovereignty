@@ -19,16 +19,25 @@ public class DocumentStatusNotificationAdapter implements DocumentStatusNotifica
 
 
     @Override
-    public void notifyStatusChanged(Document document) {
+    public void notifyStatusChanged(Document document, String traceId, String failureReason) {
         String documentId = document.id().toString();
         SseEmitter emitter = emitters.get(documentId);
 
         if (emitter != null) {
             try {
+                String dataPayload;
+                if (document.status() == Document.DocumentStatus.FAILED) {
+                    String escapedReason = failureReason != null ? failureReason.replace("\"", "\\\"").replace("\n", " ").replace("\r", " ") : "";
+                    String safeTraceId = traceId != null ? traceId : "";
+                    dataPayload = String.format("{\"status\":\"%s\",\"traceId\":\"%s\",\"failureReason\":\"%s\"}", document.status().name(), safeTraceId, escapedReason);
+                } else {
+                    dataPayload = document.status().name();
+                }
+
                 SseEmitter.SseEventBuilder event = SseEmitter.event()
                         .id(UUID.randomUUID().toString())
                         .name("status-update")
-                        .data(document.status().name())
+                        .data(dataPayload)
                         .reconnectTime(5000);
 
                 emitter.send(event);

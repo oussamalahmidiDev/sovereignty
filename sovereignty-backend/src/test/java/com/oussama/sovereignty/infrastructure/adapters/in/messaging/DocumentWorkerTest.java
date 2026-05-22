@@ -37,7 +37,8 @@ class DocumentWorkerTest {
                 List.of(documentParserPort),
                 documentParserPort,
                 vectorStorePort,
-                manageDocumentStatusUseCase
+                manageDocumentStatusUseCase,
+                null
         );
     }
 
@@ -65,7 +66,26 @@ class DocumentWorkerTest {
 
         assertEquals(document.id(), idCaptor.getValue());
         assertEquals("Hello\nWorld", chunkCaptor.getValue());
+    }
 
+    @Test
+    void processDocument_Failure() {
+        when(documentStoragePort.load(anyString())).thenThrow(new RuntimeException("Simulated processing error"));
 
+        Document document = new Document(
+                UUID.randomUUID(),
+                "test-error.txt",
+                "txt",
+                Document.DocumentStatus.UPLOADED,
+                LocalDateTime.now()
+        );
+        documentWorker.processDocument(document);
+
+        verify(manageDocumentStatusUseCase).updateDocumentStatus(
+                eq(document),
+                eq(Document.DocumentStatus.FAILED),
+                isNull(),
+                eq("Simulated processing error")
+        );
     }
 }

@@ -5,4 +5,5 @@ import com.oussama.sovereignty.domain.model.Document.DocumentStatus;
 
 public interface ManageDocumentStatusUseCase {
     void updateDocumentStatus(Document document, DocumentStatus newStatus);
+    void updateDocumentStatus(Document document, DocumentStatus newStatus, String traceId, String failureReason);
 }

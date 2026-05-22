@@ -4,12 +4,10 @@ import com.oussama.sovereignty.application.ports.in.AskQuestionUseCase;
 import com.oussama.sovereignty.application.ports.out.AiAgentPort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 
-@Service
 @RequiredArgsConstructor
 public class AskQuestionService implements AskQuestionUseCase {
 

@@ -2,14 +2,13 @@ package com.oussama.sovereignty.infrastructure.adapters.in.messaging;
 
 import com.oussama.sovereignty.application.ports.in.ManageDocumentStatusUseCase;
 import com.oussama.sovereignty.application.ports.out.DocumentParserPort;
-import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.application.ports.out.DocumentStoragePort;
 import com.oussama.sovereignty.application.ports.out.VectorStorePort;
-import com.oussama.sovereignty.application.usecase.DocumentStatusService;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.domain.model.Document.DocumentStatus;
 import com.oussama.sovereignty.infrastructure.adapters.out.parsers.TextDocumentParserAdapter;
-import com.oussama.sovereignty.infrastructure.aop.TimedStep;
+import com.oussama.sovereignty.application.aop.TimedStep;
+import io.micrometer.tracing.Tracer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
@@ -34,6 +33,8 @@ public class DocumentWorker {
     private final VectorStorePort vectorStorePort;
 
     private final ManageDocumentStatusUseCase manageDocumentStatusUseCase;
+
+    private final Tracer tracer;
 
 
     private final TokenTextSplitter textSplitter = new TokenTextSplitter();
@@ -77,7 +78,14 @@ public class DocumentWorker {
         } catch (Exception ex) {
             log.error("Error while processing document {}", document.fileName(), ex);
 
-            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.FAILED);
+            String traceId = null;
+            if (tracer != null && tracer.currentSpan() != null && tracer.currentSpan().context() != null) {
+                traceId = tracer.currentSpan().context().traceId();
+            }
+
+            String failureReason = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
+
+            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.FAILED, traceId, failureReason);
         }
 
     }

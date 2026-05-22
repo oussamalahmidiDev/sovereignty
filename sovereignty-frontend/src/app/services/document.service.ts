@@ -11,6 +11,8 @@ export interface Document {
   id: string,
   status: DocStatus,
   createdAt?: string;
+  traceId?: string;
+  failureReason?: string;
 }
 
 @Injectable({
@@ -82,12 +84,29 @@ export class DocumentService {
     const eventSource = new EventSource(`${this.API_URL}/${documentId}/subscribe`);
 
     eventSource.addEventListener('status-update', (event: any) => {
-      const newStatus = event.data as DocStatus;
+      let newStatus: DocStatus;
+      let traceId: string | undefined;
+      let failureReason: string | undefined;
+
+      try {
+        const parsed = JSON.parse(event.data);
+        newStatus = parsed.status;
+        traceId = parsed.traceId;
+        failureReason = parsed.failureReason;
+      } catch (e) {
+        newStatus = event.data as DocStatus;
+      }
+
       console.log(`Document ${documentId} status updated to ${newStatus}`);
 
       // update the document in the list
       this.documents.update(docs =>
-        docs.map(doc => doc.id === documentId ? {...doc, status: newStatus} : doc)
+        docs.map(doc => doc.id === documentId ? {
+          ...doc,
+          status: newStatus,
+          traceId: traceId || doc.traceId,
+          failureReason: failureReason || doc.failureReason
+        } : doc)
       );
 
       // optionally close connection when ready or failed
