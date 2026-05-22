@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @UseCase
@@ -54,6 +55,20 @@ public class ManageDocumentService implements ManageDocumentUseCase {
     @TimedStep("rag.findalldocs")
     public List<Document> findAllDocuments() {
         return documentRepository.findAllDocuments();
+    }
+
+    @Override
+    public DownloadedDocument downloadDocument(UUID id) {
+        Document document = documentRepository.findAllDocuments().stream()
+                .filter(existingDocument -> existingDocument.id().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Document not found: " + id));
+
+        return new DownloadedDocument(
+                document.fileName(),
+                document.contentType(),
+                storagePort.load(document.fileName())
+        );
     }
 
     @Override

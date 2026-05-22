@@ -9,5 +9,9 @@ public interface ManageDocumentUseCase {
     void importDocument(String fileName, String contentType, byte[] content);
 
     List<Document> findAllDocuments();
+    DownloadedDocument downloadDocument(UUID id);
     void deleteDocument(UUID id, String fileName);
+
+    record DownloadedDocument(String fileName, String contentType, byte[] content) {
+    }
 }

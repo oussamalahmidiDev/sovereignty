@@ -1,11 +1,14 @@
 package com.oussama.sovereignty.application.usecase;
 
 import com.oussama.sovereignty.application.ports.out.*;
+import com.oussama.sovereignty.application.ports.in.ManageDocumentUseCase.DownloadedDocument;
 import com.oussama.sovereignty.domain.model.Document;
 import org.junit.jupiter.api.Test;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -67,5 +70,28 @@ class ManageDocumentServiceTest {
         verify(documentRepository).deleteDocument(docId);
         verify(storagePort).delete(fileName);
         verify(vectorStorePort).clean(docId);
+    }
+
+    @Test
+    void downloadDocument_loadsStoredContentForDocumentId() {
+        UUID docId = UUID.randomUUID();
+        Document document = new Document(
+                docId,
+                "test.txt",
+                "text/plain",
+                Document.DocumentStatus.READY,
+                LocalDateTime.now()
+        );
+        byte[] content = "hello".getBytes();
+
+        when(documentRepository.findAllDocuments()).thenReturn(List.of(document));
+        when(storagePort.load("test.txt")).thenReturn(content);
+
+        DownloadedDocument result = manageDocumentService.downloadDocument(docId);
+
+        assertEquals("test.txt", result.fileName());
+        assertEquals("text/plain", result.contentType());
+        assertArrayEquals(content, result.content());
+        verify(storagePort).load("test.txt");
     }
 }

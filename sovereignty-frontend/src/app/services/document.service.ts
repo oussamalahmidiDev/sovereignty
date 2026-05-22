@@ -138,4 +138,22 @@ export class DocumentService {
       error: err => console.log('Error deleting file')
     });
   }
+
+  downloadDocument(document: Document) {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    this.httpClient.get(`${this.API_URL}/${document.id}/download`, {responseType: 'blob'}).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const link = window.document.createElement('a');
+        link.href = url;
+        link.download = document.fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: err => console.log('Error downloading file')
+    });
+  }
 }
