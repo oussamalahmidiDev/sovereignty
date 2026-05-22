@@ -37,7 +37,7 @@ public class DocumentWorker {
     private final Tracer tracer;
 
 
-    private final TokenTextSplitter textSplitter = new TokenTextSplitter();
+    private final TokenTextSplitter textSplitter = new TokenTextSplitter(400, 350, 10, 10000, true, List.of('.', ',', '?', '!', '\n'));
 
 
     @KafkaListener(topics = DOCUMENT_UPLOADED_TOPIC, groupId = "sovereignty-group")
