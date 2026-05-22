@@ -3,12 +3,14 @@ package com.oussama.sovereignty.infrastructure.adapters.out.persistence;
 import com.oussama.sovereignty.application.ports.out.DocumentRepositoryPort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.infrastructure.adapters.out.persistence.entities.DocumentEntity;
+import com.oussama.sovereignty.infrastructure.adapters.out.persistence.mappers.DocumentEntityMapper;
 import com.oussama.sovereignty.infrastructure.adapters.out.persistence.repositories.DocumentJpaRepository;
 import com.oussama.sovereignty.application.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -20,16 +22,7 @@ public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
     @Override
     @TimedStep("rag.store")
     public void save(Document document) {
-
-        DocumentEntity entity = DocumentEntity.builder()
-                .id(document.id())
-                .fileName(document.fileName())
-                .contentType(document.contentType())
-                .status(document.status())
-                .createdAt(document.createdAt())
-                .build();
-
-        repository.save(entity);
+        repository.save(DocumentEntityMapper.toEntity(document));
     }
 
     @Override
@@ -37,10 +30,13 @@ public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
         List<DocumentEntity> entities = repository.findAllByOrderByCreatedAtDesc();
 
         return entities.stream()
-                .map(entity ->
-                        new Document(entity.getId(), entity.getFileName(), entity.getContentType(), entity.getStatus(), entity.getCreatedAt())
-                )
+                .map(DocumentEntityMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Document> findDocumentById(UUID id) {
+        return repository.findById(id).map(DocumentEntityMapper::toDomain);
     }
 
     @Override

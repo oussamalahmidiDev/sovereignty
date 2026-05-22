@@ -59,9 +59,7 @@ public class ManageDocumentService implements ManageDocumentUseCase {
 
     @Override
     public DownloadedDocument downloadDocument(UUID id) {
-        Document document = documentRepository.findAllDocuments().stream()
-                .filter(existingDocument -> existingDocument.id().equals(id))
-                .findFirst()
+        Document document = documentRepository.findDocumentById(id)
                 .orElseThrow(() -> new NoSuchElementException("Document not found: " + id));
 
         return new DownloadedDocument(

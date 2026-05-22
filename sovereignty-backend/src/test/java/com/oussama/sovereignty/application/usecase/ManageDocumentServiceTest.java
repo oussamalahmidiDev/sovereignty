@@ -6,6 +6,7 @@ import com.oussama.sovereignty.domain.model.Document;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -84,7 +85,7 @@ class ManageDocumentServiceTest {
         );
         byte[] content = "hello".getBytes();
 
-        when(documentRepository.findAllDocuments()).thenReturn(List.of(document));
+        when(documentRepository.findDocumentById(docId)).thenReturn(Optional.of(document));
         when(storagePort.load("test.txt")).thenReturn(content);
 
         DownloadedDocument result = manageDocumentService.downloadDocument(docId);
@@ -92,6 +93,8 @@ class ManageDocumentServiceTest {
         assertEquals("test.txt", result.fileName());
         assertEquals("text/plain", result.contentType());
         assertArrayEquals(content, result.content());
+        verify(documentRepository).findDocumentById(docId);
+        verify(documentRepository, never()).findAllDocuments();
         verify(storagePort).load("test.txt");
     }
 }
