@@ -19,6 +19,8 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import java.util.List;
 import java.util.Map;
 
+import static com.oussama.sovereignty.application.common.ExceptionUtils.runOrThrow;
+
 @UseCase
 @Slf4j
 @RequiredArgsConstructor
@@ -45,29 +47,25 @@ public class IndexDocumentService implements IndexDocumentUseCase {
             // mark as processing
             manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.PROCESSING, traceId, null);
 
-            byte[] content;
-            try {
-                content = storagePort.load(document.fileName());
-            } catch (Exception ex) {
-                throw new FatalDocumentProcessingException("Failed to load document content from storage", ex);
-            }
+            // 1. Load file content
+            byte[] content = runOrThrow(
+                    () -> storagePort.load(document.fileName()),
+                    ex -> new FatalDocumentProcessingException("Failed to load document content from storage", ex)
+            );
 
+            // 2. Resolve parser and parse
             String extension = document.fileName().substring(document.fileName().lastIndexOf(".") + 1);
-
             DocumentParserPort parser = parsers.stream()
                     .filter(documentParserPort -> documentParserPort.supports(extension))
                     .findFirst()
                     .orElse(defaultParserAdapter);
 
-            // Extract content from the file.
-            String rawText;
-            try {
-                rawText = parser.parse(content);
-            } catch (Exception ex) {
-                throw new FatalDocumentProcessingException("Failed to parse document content", ex);
-            }
+            String rawText = runOrThrow(
+                    () -> parser.parse(content),
+                    ex -> new FatalDocumentProcessingException("Failed to parse document content", ex)
+            );
 
-            // Split the content into small chunks
+            // 3. Split content
             var textChunks = textSplitter.split(
                     new org.springframework.ai.document.Document(
                             rawText,
@@ -76,16 +74,15 @@ public class IndexDocumentService implements IndexDocumentUseCase {
             );
             log.info("Document is split into {} chunks.", textChunks.size());
 
-            // Vectorization and storage in a single batch
             List<String> chunks = textChunks.stream()
                     .map(org.springframework.ai.document.Document::getText)
                     .toList();
 
-            try {
-                vectorStorePort.embed(document.id(), chunks);
-            } catch (Exception ex) {
-                throw new TransientDocumentProcessingException("Vector store embedding failed", ex);
-            }
+            // 4. Embed chunks
+            runOrThrow(
+                    () -> vectorStorePort.embed(document.id(), chunks),
+                    ex -> new TransientDocumentProcessingException("Vector store embedding failed", ex)
+            );
 
             // mark as ready
             manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.READY, traceId, null);
