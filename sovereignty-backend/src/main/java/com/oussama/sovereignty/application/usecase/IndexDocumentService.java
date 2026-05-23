@@ -16,6 +16,8 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 @UseCase
 @Slf4j
@@ -62,9 +64,16 @@ public class IndexDocumentService implements IndexDocumentUseCase {
             );
             log.info("Document is split into {} chunks.", textChunks.size());
 
-            // Vectorization and storage
-            for (var chunk : textChunks) {
-                vectorStorePort.embed(document.id(), chunk.getText());
+            // Vectorization and storage in parallel using virtual threads (Structured Concurrency style)
+            List<Callable<Void>> tasks = textChunks.stream()
+                    .map(chunk -> (Callable<Void>) () -> {
+                        vectorStorePort.embed(document.id(), chunk.getText());
+                        return null;
+                    })
+                    .toList();
+
+            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                executor.invokeAll(tasks);
             }
 
             // mark as ready
