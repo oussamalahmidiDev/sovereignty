@@ -65,6 +65,7 @@ public class DocumentController {
     @GetMapping
     @Operation(summary = "List all documents", description = "Retrieves a list of all uploaded documents along with their processing status and any failure details.")
     public ResponseEntity<List<DocumentResponse>> getAllDocuments() {
+        log.info("Retrieving list of all documents");
         List<DocumentDetails> documents = manageDocumentUseCase.findAllDocuments();
 
         return ResponseEntity.ok(documents.stream()
@@ -83,6 +84,7 @@ public class DocumentController {
     @GetMapping(value = "/{documentId}/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Subscribe to document status updates", description = "Establishes a Server-Sent Events (SSE) connection to receive real-time updates on a document's processing status.")
     public Flux<ServerSentEvent<String>> subscribeToDocumentStatus(@PathVariable String documentId) {
+        log.info("Client subscribed to status updates for document: {}", documentId);
         UUID docId = UUID.fromString(documentId);
         return Flux.create(sink -> {
             Subscription subscription = manageDocumentUseCase.subscribeToStatus(docId, new DocumentStatusCallback() {

@@ -41,7 +41,7 @@ services:
     image: grafana/promtail:latest
     container_name: sovereignty-promtail
     volumes:
-      - ./logs:/var/log/sovereignty
+      - ./sovereignty-backend/logs:/var/log/sovereignty
       - ./observability/promtail/promtail.yml:/etc/promtail/promtail.yml
     command: -config.file=/etc/promtail/promtail.yml
     depends_on:

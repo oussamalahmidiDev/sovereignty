@@ -16,7 +16,12 @@ datasources:
     editable: true
     jsonData:
       derivedFields:
-        - datasourceUid: tempo
-          matcherRegex: '"traceId":"(\w+)"'
+        - matcherRegex: '"traceId":"(\w+)"'
           name: TraceID
-          url: '$${__value.raw}'
+          url: '/explore?left=%5B%22now-1h%22,%22now%22,%22Tempo%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    editable: true
