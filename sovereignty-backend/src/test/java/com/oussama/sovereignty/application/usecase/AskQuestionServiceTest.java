@@ -101,6 +101,10 @@ class AskQuestionServiceTest {
         }
 
         @Override
+        public void embed(UUID documentId, List<String> contents) {
+        }
+
+        @Override
         public void clean(UUID documentId) {
         }
 

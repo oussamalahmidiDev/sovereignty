@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.UUID;
 
 public interface VectorStorePort {
-    void embed(UUID documentId, String content);
+    default void embed(UUID documentId, String content) {
+        embed(documentId, List.of(content));
+    }
+
+    void embed(UUID documentId, List<String> contents);
 
     void clean(UUID documentId);
 

@@ -25,11 +25,11 @@ public class PgVectorAdapter implements VectorStorePort {
     private final EntityManager entityManager;
 
     @Override
-    public void embed(UUID documentId, String content) {
-
-        Document document = new Document(content, Map.of("documentId", documentId.toString()));
-
-        pgVectorStore.add(List.of(document));
+    public void embed(UUID documentId, List<String> contents) {
+        List<Document> documents = contents.stream()
+                .map(content -> new Document(content, Map.of("documentId", documentId.toString())))
+                .toList();
+        pgVectorStore.add(documents);
     }
 
     @Override

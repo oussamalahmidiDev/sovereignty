@@ -53,7 +53,7 @@ class IndexDocumentServiceTest {
         indexDocumentService.indexDocument(document);
 
         verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.PROCESSING);
-        verify(vectorStorePort, atLeastOnce()).embed(eq(docId), anyString());
+        verify(vectorStorePort).embed(eq(docId), anyList());
         verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.READY);
     }
 }
