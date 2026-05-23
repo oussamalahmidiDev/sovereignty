@@ -57,4 +57,67 @@ class IndexDocumentServiceTest {
         verify(vectorStorePort).embed(eq(docId), anyList());
         verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.READY, "test-trace-id", null);
     }
+
+    @Test
+    void indexDocument_fatalError_marksFailedImmediately() {
+        UUID docId = UUID.randomUUID();
+        Document document = new Document(
+                docId,
+                "hello.txt",
+                "text/plain",
+                Document.DocumentStatus.UPLOADED,
+                LocalDateTime.now()
+        );
+
+        when(storagePort.load("hello.txt")).thenThrow(new RuntimeException("Storage disk full or missing file"));
+        when(traceContextPort.getCurrentTraceId()).thenReturn("test-trace-id");
+
+        indexDocumentService.indexDocument(document);
+
+        verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.PROCESSING, "test-trace-id", null);
+        // Should mark as FAILED directly due to storage failure being wrapped as Fatal
+        verify(manageDocumentStatusUseCase).updateDocumentStatus(
+                eq(document),
+                eq(Document.DocumentStatus.FAILED),
+                eq("test-trace-id"),
+                contains("Failed to load document content from storage")
+        );
+        // Vector store should never be invoked
+        verifyNoInteractions(vectorStorePort);
+    }
+
+    @Test
+    void indexDocument_transientError_propagatesException() {
+        UUID docId = UUID.randomUUID();
+        Document document = new Document(
+                docId,
+                "hello.txt",
+                "text/plain",
+                Document.DocumentStatus.UPLOADED,
+                LocalDateTime.now()
+        );
+
+        byte[] content = "Hello World".getBytes();
+        when(storagePort.load("hello.txt")).thenReturn(content);
+        when(parserPort.supports("txt")).thenReturn(true);
+        when(parserPort.parse(content)).thenReturn("Hello World");
+        when(traceContextPort.getCurrentTraceId()).thenReturn("test-trace-id");
+        doThrow(new RuntimeException("Ollama timeout")).when(vectorStorePort).embed(eq(docId), anyList());
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.oussama.sovereignty.domain.exception.TransientDocumentProcessingException.class,
+                () -> indexDocumentService.indexDocument(document)
+        );
+
+        verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.PROCESSING, "test-trace-id", null);
+        // Vector store was tried and failed
+        verify(vectorStorePort).embed(eq(docId), anyList());
+        // Status should NOT be marked as FAILED yet because it's propagated for retry
+        verify(manageDocumentStatusUseCase, never()).updateDocumentStatus(
+                eq(document),
+                eq(Document.DocumentStatus.FAILED),
+                any(),
+                any()
+        );
+    }
 }

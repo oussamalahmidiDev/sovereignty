@@ -8,6 +8,8 @@ import com.oussama.sovereignty.application.ports.out.VectorStorePort;
 import com.oussama.sovereignty.application.ports.out.TraceContextPort;
 import com.oussama.sovereignty.domain.model.Document;
 import com.oussama.sovereignty.domain.model.Document.DocumentStatus;
+import com.oussama.sovereignty.domain.exception.FatalDocumentProcessingException;
+import com.oussama.sovereignty.domain.exception.TransientDocumentProcessingException;
 import com.oussama.sovereignty.application.common.UseCase;
 import com.oussama.sovereignty.application.aop.TimedStep;
 import lombok.RequiredArgsConstructor;
@@ -36,15 +38,20 @@ public class IndexDocumentService implements IndexDocumentUseCase {
     @Override
     @TimedStep("rag.embed.duration")
     public void indexDocument(Document document) {
+        String traceId = traceContextPort.getCurrentTraceId();
         try {
             log.info("Vectorization of file : {}", document.fileName());
-
-            String traceId = traceContextPort.getCurrentTraceId();
 
             // mark as processing
             manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.PROCESSING, traceId, null);
 
-            byte[] content = storagePort.load(document.fileName());
+            byte[] content;
+            try {
+                content = storagePort.load(document.fileName());
+            } catch (Exception ex) {
+                throw new FatalDocumentProcessingException("Failed to load document content from storage", ex);
+            }
+
             String extension = document.fileName().substring(document.fileName().lastIndexOf(".") + 1);
 
             DocumentParserPort parser = parsers.stream()
@@ -53,7 +60,12 @@ public class IndexDocumentService implements IndexDocumentUseCase {
                     .orElse(defaultParserAdapter);
 
             // Extract content from the file.
-            String rawText = parser.parse(content);
+            String rawText;
+            try {
+                rawText = parser.parse(content);
+            } catch (Exception ex) {
+                throw new FatalDocumentProcessingException("Failed to parse document content", ex);
+            }
 
             // Split the content into small chunks
             var textChunks = textSplitter.split(
@@ -68,19 +80,27 @@ public class IndexDocumentService implements IndexDocumentUseCase {
             List<String> chunks = textChunks.stream()
                     .map(org.springframework.ai.document.Document::getText)
                     .toList();
-            vectorStorePort.embed(document.id(), chunks);
+
+            try {
+                vectorStorePort.embed(document.id(), chunks);
+            } catch (Exception ex) {
+                throw new TransientDocumentProcessingException("Vector store embedding failed", ex);
+            }
 
             // mark as ready
             manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.READY, traceId, null);
 
             log.info("Vectorisation is finished successfully : {}", document.fileName());
-        } catch (Exception ex) {
-            log.error("Error while processing document {}", document.fileName(), ex);
-
-            String traceId = traceContextPort.getCurrentTraceId();
+        } catch (FatalDocumentProcessingException ex) {
+            log.error("Fatal error while processing document {}: {}", document.fileName(), ex.getMessage());
             String failureReason = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
-
             manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.FAILED, traceId, failureReason);
+        } catch (TransientDocumentProcessingException ex) {
+            log.warn("Transient error while processing document {}, will propagate for retry: {}", document.fileName(), ex.getMessage());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Unexpected error while processing document {}, treating as transient: {}", document.fileName(), ex.getMessage(), ex);
+            throw new TransientDocumentProcessingException("Unexpected error during indexing", ex);
         }
     }
 }
