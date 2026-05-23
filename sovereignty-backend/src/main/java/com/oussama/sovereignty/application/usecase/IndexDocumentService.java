@@ -39,8 +39,10 @@ public class IndexDocumentService implements IndexDocumentUseCase {
         try {
             log.info("Vectorization of file : {}", document.fileName());
 
+            String traceId = traceContextPort.getCurrentTraceId();
+
             // mark as processing
-            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.PROCESSING);
+            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.PROCESSING, traceId, null);
 
             byte[] content = storagePort.load(document.fileName());
             String extension = document.fileName().substring(document.fileName().lastIndexOf(".") + 1);
@@ -69,7 +71,7 @@ public class IndexDocumentService implements IndexDocumentUseCase {
             vectorStorePort.embed(document.id(), chunks);
 
             // mark as ready
-            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.READY);
+            manageDocumentStatusUseCase.updateDocumentStatus(document, DocumentStatus.READY, traceId, null);
 
             log.info("Vectorisation is finished successfully : {}", document.fileName());
         } catch (Exception ex) {

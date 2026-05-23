@@ -49,11 +49,12 @@ class IndexDocumentServiceTest {
         when(storagePort.load("hello.txt")).thenReturn(content);
         when(parserPort.supports("txt")).thenReturn(true);
         when(parserPort.parse(content)).thenReturn("Hello World");
+        when(traceContextPort.getCurrentTraceId()).thenReturn("test-trace-id");
 
         indexDocumentService.indexDocument(document);
 
-        verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.PROCESSING);
+        verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.PROCESSING, "test-trace-id", null);
         verify(vectorStorePort).embed(eq(docId), anyList());
-        verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.READY);
+        verify(manageDocumentStatusUseCase).updateDocumentStatus(document, Document.DocumentStatus.READY, "test-trace-id", null);
     }
 }
