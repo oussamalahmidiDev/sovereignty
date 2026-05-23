@@ -1,63 +1,75 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.sse;
 
+import com.oussama.sovereignty.application.common.DocumentStatusCallback;
+import com.oussama.sovereignty.application.common.Subscription;
 import com.oussama.sovereignty.application.ports.out.DocumentStatusNotificationPort;
 import com.oussama.sovereignty.domain.model.Document;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @Slf4j
 public class DocumentStatusNotificationAdapter implements DocumentStatusNotificationPort {
 
-    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-
+    private final Map<UUID, List<DocumentStatusCallback>> subscribers = new ConcurrentHashMap<>();
 
     @Override
     public void notifyStatusChanged(Document document, String traceId, String failureReason) {
-        String documentId = document.id().toString();
-        SseEmitter emitter = emitters.get(documentId);
+        UUID documentId = document.id();
+        List<DocumentStatusCallback> list = subscribers.get(documentId);
 
-        if (emitter != null) {
-            try {
-                String dataPayload;
-                if (document.status() == Document.DocumentStatus.FAILED) {
-                    String escapedReason = failureReason != null ? failureReason.replace("\"", "\\\"").replace("\n", " ").replace("\r", " ") : "";
-                    String safeTraceId = traceId != null ? traceId : "";
-                    dataPayload = String.format("{\"status\":\"%s\",\"traceId\":\"%s\",\"failureReason\":\"%s\"}", document.status().name(), safeTraceId, escapedReason);
-                } else {
-                    dataPayload = document.status().name();
+        if (list != null && !list.isEmpty()) {
+            String dataPayload;
+            if (document.status() == Document.DocumentStatus.FAILED) {
+                String escapedReason = failureReason != null ? failureReason.replace("\"", "\\\"").replace("\n", " ").replace("\r", " ") : "";
+                String safeTraceId = traceId != null ? traceId : "";
+                dataPayload = """
+                        {"status":"%s","traceId":"%s","failureReason":"%s"}"""
+                        .formatted(document.status().name(), safeTraceId, escapedReason);
+            } else {
+                dataPayload = document.status().name();
+            }
+
+            for (DocumentStatusCallback callback : list) {
+                try {
+                    callback.onStatusChanged(dataPayload);
+                    if (document.status() == Document.DocumentStatus.READY) {
+                        callback.onComplete();
+                    } else if (document.status() == Document.DocumentStatus.FAILED) {
+                        callback.onError(new RuntimeException("Document processing failed: " + failureReason));
+                    }
+                } catch (Exception e) {
+                    log.error("Error triggering status update callback for document {}", documentId, e);
                 }
+            }
 
-                SseEmitter.SseEventBuilder event = SseEmitter.event()
-                        .id(UUID.randomUUID().toString())
-                        .name("status-update")
-                        .data(dataPayload)
-                        .reconnectTime(5000);
-
-                emitter.send(event);
-                log.info("Status update sent for document {}: {}", documentId, document.status());
-            } catch (IOException e) {
-                log.error("Error sending SSE event for document {}", documentId, e);
-                emitters.remove(documentId);
+            // Cleanup subscription on terminal states (READY or FAILED)
+            if (document.status() == Document.DocumentStatus.READY || document.status() == Document.DocumentStatus.FAILED) {
+                subscribers.remove(documentId);
             }
         }
     }
 
-    public SseEmitter subscribe(String documentId) {
-        SseEmitter emitter = new SseEmitter(60000L); // 60 second timeout
+    @Override
+    public Subscription subscribe(UUID documentId, DocumentStatusCallback callback) {
+        subscribers.computeIfAbsent(documentId, k -> new CopyOnWriteArrayList<>()).add(callback);
+        log.info("Client subscribed to status updates for document {}", documentId);
 
-        emitters.put(documentId, emitter);
-
-        emitter.onCompletion(() -> emitters.remove(documentId));
-        emitter.onTimeout(() -> emitters.remove(documentId));
-        emitter.onError(throwable -> emitters.remove(documentId));
-
-        return emitter;
+        return () -> {
+            List<DocumentStatusCallback> list = subscribers.get(documentId);
+            if (list != null) {
+                list.remove(callback);
+                if (list.isEmpty()) {
+                    subscribers.remove(documentId);
+                }
+                log.info("Client unsubscribed from status updates for document {}", documentId);
+            }
+        };
     }
 }

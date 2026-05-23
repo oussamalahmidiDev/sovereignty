@@ -23,6 +23,7 @@ class ManageDocumentServiceTest {
     private final VectorStorePort vectorStorePort = mock(VectorStorePort.class);
     private final DocumentEventRepositoryPort documentEventRepository = mock(DocumentEventRepositoryPort.class);
     private final TraceContextPort traceContextPort = mock(TraceContextPort.class);
+    private final DocumentStatusNotificationPort documentStatusNotificationPort = mock(DocumentStatusNotificationPort.class);
 
     private final ManageDocumentService manageDocumentService = new ManageDocumentService(
             documentRepository,
@@ -30,7 +31,8 @@ class ManageDocumentServiceTest {
             eventPublisher,
             vectorStorePort,
             documentEventRepository,
-            traceContextPort
+            traceContextPort,
+            documentStatusNotificationPort
     );
 
     @Test
@@ -52,13 +54,20 @@ class ManageDocumentServiceTest {
 
     @Test
     void findAllDocuments_delegatesToRepository() {
-        List<Document> mockDocs = List.of(mock(Document.class));
+        UUID docId = UUID.randomUUID();
+        Document mockDoc = new Document(docId, "test.txt", "text/plain", Document.DocumentStatus.READY, LocalDateTime.now());
+        List<Document> mockDocs = List.of(mockDoc);
         when(documentRepository.findAllDocuments()).thenReturn(mockDocs);
+        when(documentEventRepository.findFailureDetailsByDocumentIds(anyList())).thenReturn(java.util.Collections.emptyMap());
 
-        List<Document> result = manageDocumentService.findAllDocuments();
+        var result = manageDocumentService.findAllDocuments();
 
-        assertEquals(mockDocs, result);
+        assertEquals(1, result.size());
+        assertEquals(docId, result.get(0).id());
+        assertEquals("test.txt", result.get(0).fileName());
+        assertEquals("READY", result.get(0).status());
         verify(documentRepository).findAllDocuments();
+        verify(documentEventRepository).findFailureDetailsByDocumentIds(anyList());
     }
 
     @Test

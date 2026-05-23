@@ -1,13 +1,13 @@
 package com.oussama.sovereignty.infrastructure.adapters.in.web;
 
-import com.oussama.sovereignty.application.ports.out.DocumentEventRepositoryPort;
-import com.oussama.sovereignty.application.ports.out.DocumentEventRepositoryPort.EventDetails;
+import com.oussama.sovereignty.application.ports.in.ManageDocumentUseCase;
 import com.oussama.sovereignty.application.ports.in.ManageDocumentUseCase.DownloadedDocument;
-import com.oussama.sovereignty.application.usecase.ManageDocumentService;
+import com.oussama.sovereignty.application.ports.in.ManageDocumentUseCase.DocumentDetails;
+import com.oussama.sovereignty.application.common.DocumentStatusCallback;
+import com.oussama.sovereignty.application.common.Subscription;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.request.DocumentDeletionRequest;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.AcceptedResponse;
 import com.oussama.sovereignty.infrastructure.adapters.in.web.response.DocumentResponse;
-import com.oussama.sovereignty.infrastructure.adapters.out.sse.DocumentStatusNotificationAdapter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +20,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 
-import com.oussama.sovereignty.domain.model.Document;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -35,9 +34,7 @@ import java.util.UUID;
 @Tag(name = "Documents", description = "Endpoints for uploading, listing, downloading, and deleting indexable documents")
 public class DocumentController {
 
-    private final ManageDocumentService manageDocumentService;
-    private final DocumentStatusNotificationAdapter documentStatusNotificationAdapter;
-    private final DocumentEventRepositoryPort documentEventRepositoryPort;
+    private final ManageDocumentUseCase manageDocumentUseCase;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload and index a document", description = "Uploads a text or markdown file, extracts its chunks, generates embeddings, and saves them to the pgvector database.")
@@ -49,7 +46,7 @@ public class DocumentController {
         }
 
         try {
-            manageDocumentService.importDocument(
+            manageDocumentUseCase.importDocument(
                     file.getOriginalFilename(),
                     file.getContentType(),
                     file.getBytes()
@@ -68,41 +65,55 @@ public class DocumentController {
     @GetMapping
     @Operation(summary = "List all documents", description = "Retrieves a list of all uploaded documents along with their processing status and any failure details.")
     public ResponseEntity<List<DocumentResponse>> getAllDocuments() {
-        List<Document> documents = manageDocumentService.findAllDocuments();
-        List<UUID> documentIds = documents.stream().map(Document::id).toList();
-        
-        Map<UUID, EventDetails> failureDetails = 
-                documentEventRepositoryPort.findFailureDetailsByDocumentIds(documentIds);
+        List<DocumentDetails> documents = manageDocumentUseCase.findAllDocuments();
 
         return ResponseEntity.ok(documents.stream()
-                .map(document -> {
-                    var details = failureDetails.get(document.id());
-                    String traceId = details != null ? details.traceId() : null;
-                    String failureReason = details != null ? details.failureReason() : null;
-                    return new DocumentResponse(
-                            document.id(),
-                            document.fileName(),
-                            document.contentType(),
-                            document.status().name(),
-                            document.createdAt(),
-                            traceId,
-                            failureReason
-                    );
-                })
+                .map(document -> new DocumentResponse(
+                        document.id(),
+                        document.fileName(),
+                        document.contentType(),
+                        document.status(),
+                        document.createdAt(),
+                        document.traceId(),
+                        document.failureReason()
+                ))
                 .toList());
     }
 
-    @GetMapping("/{documentId}/subscribe")
+    @GetMapping(value = "/{documentId}/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Subscribe to document status updates", description = "Establishes a Server-Sent Events (SSE) connection to receive real-time updates on a document's processing status.")
-    public SseEmitter subscribeToDocumentStatus(@PathVariable String documentId) {
-        return documentStatusNotificationAdapter.subscribe(documentId);
+    public Flux<ServerSentEvent<String>> subscribeToDocumentStatus(@PathVariable String documentId) {
+        UUID docId = UUID.fromString(documentId);
+        return Flux.create(sink -> {
+            Subscription subscription = manageDocumentUseCase.subscribeToStatus(docId, new DocumentStatusCallback() {
+                @Override
+                public void onStatusChanged(String status) {
+                    sink.next(ServerSentEvent.<String>builder()
+                            .id(UUID.randomUUID().toString())
+                            .event("status-update")
+                            .data(status)
+                            .build());
+                }
+
+                @Override
+                public void onComplete() {
+                    sink.complete();
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    sink.error(throwable);
+                }
+            });
+            sink.onDispose(subscription::unsubscribe);
+        });
     }
 
     @GetMapping("/{documentId}/download")
     @Operation(summary = "Download raw document", description = "Downloads the original raw text/markdown file content for a given document ID.")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable UUID documentId) {
         try {
-            DownloadedDocument document = manageDocumentService.downloadDocument(documentId);
+            DownloadedDocument document = manageDocumentUseCase.downloadDocument(documentId);
             MediaType contentType = document.contentType() != null
                     ? MediaType.parseMediaType(document.contentType())
                     : MediaType.APPLICATION_OCTET_STREAM;
@@ -122,6 +133,6 @@ public class DocumentController {
     @DeleteMapping
     @Operation(summary = "Delete a document", description = "Removes a document from the system, deleting both its raw content, metadata, and all vector store embeddings.")
     public void deleteDocument(@RequestBody DocumentDeletionRequest request) {
-        manageDocumentService.deleteDocument(request.id(), request.fileName());
+        manageDocumentUseCase.deleteDocument(request.id(), request.fileName());
     }
 }
