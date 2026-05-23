@@ -14,6 +14,13 @@ backend:
   secret:
     datasourceUsername: admin
     datasourcePassword: password
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
 frontend:
   name: sovereignty-frontend
@@ -21,6 +28,13 @@ frontend:
   imagePullPolicy: Never
   replicas: 1
   port: 80
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
 
 postgres:
   name: postgres
@@ -31,12 +45,28 @@ postgres:
   password: password
   storage:
     size: 2Gi
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
 kafka:
   name: kafka
   image: apache/kafka:latest
   port: 9092
   controllerPort: 9093
+  storage:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
 ingress:
   enabled: true

@@ -35,6 +35,13 @@ spec:
               value: {{ .Values.postgres.username | quote }}
             - name: POSTGRES_PASSWORD
               value: {{ .Values.postgres.password | quote }}
+          resources:
+            requests:
+              cpu: {{ .Values.postgres.resources.requests.cpu | quote }}
+              memory: {{ .Values.postgres.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.postgres.resources.limits.cpu | quote }}
+              memory: {{ .Values.postgres.resources.limits.memory | quote }}
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data

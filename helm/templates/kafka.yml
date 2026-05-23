@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.kafka.name }}-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.kafka.storage.size }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,6 +46,22 @@ spec:
               value: "PLAINTEXT"
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
               value: "1"
+            - name: KAFKA_LOG_DIRS
+              value: "/var/lib/kafka/data"
+          resources:
+            requests:
+              cpu: {{ .Values.kafka.resources.requests.cpu | quote }}
+              memory: {{ .Values.kafka.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ .Values.kafka.resources.limits.cpu | quote }}
+              memory: {{ .Values.kafka.resources.limits.memory | quote }}
+          volumeMounts:
+            - name: kafka-storage
+              mountPath: /var/lib/kafka/data
+      volumes:
+        - name: kafka-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.kafka.name }}-pvc
 ---
 apiVersion: v1
 kind: Service

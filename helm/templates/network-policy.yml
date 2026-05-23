@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.postgres.name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.backend.name }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.postgres.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Values.kafka.name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.backend.name }}
+        - podSelector:
+            matchLabels:
+              app: {{ .Values.kafka.name }} # Allow Kafka to talk to itself (broker-controller communication)
+      ports:
+        - protocol: TCP
+          port: {{ .Values.kafka.port }}
+        - protocol: TCP
+          port: {{ .Values.kafka.controllerPort }}
