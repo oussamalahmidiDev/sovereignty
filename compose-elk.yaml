@@ -28,3 +28,9 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
+
+  collector:
+    image: jaegertracing/jaeger:2.5.0
+    ports:
+      - "4318:4318"
+      - "16686:16686"
