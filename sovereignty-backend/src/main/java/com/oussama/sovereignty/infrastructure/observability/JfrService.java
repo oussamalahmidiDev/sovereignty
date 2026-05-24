@@ -53,7 +53,7 @@ public class JfrService {
         return "JFR recording stopped";
     }
 
-    public synchronized Path getRecordingFile() {
+    public Path getRecordingFile() {
         return recordingFile.get();
     }
 }

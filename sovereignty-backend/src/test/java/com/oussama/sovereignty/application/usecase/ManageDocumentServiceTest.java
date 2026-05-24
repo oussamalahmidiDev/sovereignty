@@ -24,6 +24,8 @@ class ManageDocumentServiceTest {
     private final DocumentEventRepositoryPort documentEventRepository = mock(DocumentEventRepositoryPort.class);
     private final TraceContextPort traceContextPort = mock(TraceContextPort.class);
     private final DocumentStatusNotificationPort documentStatusNotificationPort = mock(DocumentStatusNotificationPort.class);
+    private final OutboxRepositoryPort outboxRepository = mock(OutboxRepositoryPort.class);
+    private final JsonSerializerPort jsonSerializer = mock(JsonSerializerPort.class);
 
     private final ManageDocumentService manageDocumentService = new ManageDocumentService(
             documentRepository,
@@ -32,7 +34,9 @@ class ManageDocumentServiceTest {
             vectorStorePort,
             documentEventRepository,
             traceContextPort,
-            documentStatusNotificationPort
+            documentStatusNotificationPort,
+            outboxRepository,
+            jsonSerializer
     );
 
     @Test
@@ -43,13 +47,16 @@ class ManageDocumentServiceTest {
         String traceId = "test-trace-id-999";
 
         when(traceContextPort.getCurrentTraceId()).thenReturn(traceId);
+        when(jsonSerializer.serialize(any(Document.class))).thenReturn("{\"id\":\"some-uuid\"}");
 
         manageDocumentService.importDocument(fileName, contentType, content);
 
         verify(storagePort).store(content, fileName);
         verify(documentRepository).save(any(Document.class));
         verify(documentEventRepository).saveEvent(any(UUID.class), eq("UPLOADED"), eq(traceId), eq(null));
-        verify(eventPublisher).publishDocumentUploaded(any(Document.class));
+        verify(jsonSerializer).serialize(any(Document.class));
+        verify(outboxRepository).save(any(com.oussama.sovereignty.domain.model.OutboxEvent.class));
+        verify(eventPublisher, never()).publishDocumentUploaded(any(Document.class));
     }
 
     @Test

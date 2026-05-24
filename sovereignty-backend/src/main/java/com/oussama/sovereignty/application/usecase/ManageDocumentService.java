@@ -15,6 +15,9 @@ import com.oussama.sovereignty.application.aop.TimedStep;
 import com.oussama.sovereignty.application.ports.out.TraceContextPort;
 import com.oussama.sovereignty.application.common.UseCase;
 import com.oussama.sovereignty.application.common.DomainTransactional;
+import com.oussama.sovereignty.application.ports.out.OutboxRepositoryPort;
+import com.oussama.sovereignty.application.ports.out.JsonSerializerPort;
+import com.oussama.sovereignty.domain.model.OutboxEvent;
 import lombok.RequiredArgsConstructor;
 import java.util.Map;
 
@@ -34,6 +37,8 @@ public class ManageDocumentService implements ManageDocumentUseCase {
     private final DocumentEventRepositoryPort documentEventRepository;
     private final TraceContextPort traceContextPort;
     private final DocumentStatusNotificationPort documentStatusNotificationPort;
+    private final OutboxRepositoryPort outboxRepository;
+    private final JsonSerializerPort jsonSerializer;
 
     @Override
     @DomainTransactional
@@ -54,7 +59,19 @@ public class ManageDocumentService implements ManageDocumentUseCase {
         String traceId = traceContextPort.getCurrentTraceId();
         documentEventRepository.saveEvent(document.id(), "UPLOADED", traceId, null);
 
-        eventPublisher.publishDocumentUploaded(document);
+        String payload = jsonSerializer.serialize(document);
+        OutboxEvent outboxEvent = new OutboxEvent(
+                UUID.randomUUID(),
+                "DOCUMENT",
+                document.id().toString(),
+                "DOCUMENT_UPLOADED",
+                payload,
+                traceId,
+                OutboxEvent.OutboxStatus.PENDING,
+                LocalDateTime.now(),
+                null
+        );
+        outboxRepository.save(outboxEvent);
     }
 
     @Override

@@ -18,7 +18,13 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 
+import com.oussama.sovereignty.application.common.ListUtils;
 import static com.oussama.sovereignty.application.common.ExceptionUtils.runOrThrow;
 
 @UseCase
@@ -32,6 +38,8 @@ public class IndexDocumentService implements IndexDocumentUseCase {
     private final VectorStorePort vectorStorePort;
     private final ManageDocumentStatusUseCase manageDocumentStatusUseCase;
     private final TraceContextPort traceContextPort;
+
+    private final Semaphore embeddingSemaphore = new Semaphore(4);
 
     private final TokenTextSplitter textSplitter = new TokenTextSplitter(
             400, 350, 10, 10000, true, List.of('.', ',', '?', '!', '\n')
@@ -79,8 +87,40 @@ public class IndexDocumentService implements IndexDocumentUseCase {
                     .toList();
 
             // 4. Embed chunks
+            List<List<String>> batches = ListUtils.partition(chunks, 10);
+            log.info("Partitioned {} chunks into {} batches for parallel embedding.", chunks.size(), batches.size());
+
             runOrThrow(
-                    () -> vectorStorePort.embed(document.id(), chunks),
+                    () -> {
+                        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                            List<Future<Void>> futures = new ArrayList<>();
+                            for (List<String> batch : batches) {
+                                futures.add(executor.submit(() -> {
+                                    embeddingSemaphore.acquire();
+                                    try {
+                                        log.info("Embedding batch of size {} concurrently...", batch.size());
+                                        vectorStorePort.embed(document.id(), batch);
+                                        return null;
+                                    } finally {
+                                        embeddingSemaphore.release();
+                                    }
+                                }));
+                            }
+
+                            for (Future<Void> future : futures) {
+                                try {
+                                    future.get();
+                                } catch (ExecutionException e) {
+                                    Throwable cause = e.getCause();
+                                    if (cause instanceof RuntimeException) {
+                                        throw (RuntimeException) cause;
+                                    }
+                                    throw new RuntimeException(cause);
+                                }
+                            }
+                        }
+                        return null;
+                    },
                     ex -> new TransientDocumentProcessingException("Vector store embedding failed", ex)
             );
 
