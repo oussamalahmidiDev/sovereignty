@@ -33,7 +33,7 @@ public class OutboxScheduler {
 
         for (OutboxEvent event : pendingEvents) {
             try {
-                if ("DOCUMENT_UPLOADED".equals(event.eventType())) {
+                if (event.eventType() == OutboxEvent.EventType.DOCUMENT_UPLOADED) {
                     Document document = jsonSerializer.deserialize(event.payload(), Document.class);
                     eventPublisher.publishDocumentUploaded(document);
                     outboxRepository.updateStatus(event.id(), OutboxEvent.OutboxStatus.PROCESSED, LocalDateTime.now());

@@ -5,9 +5,9 @@ import java.util.UUID;
 
 public record OutboxEvent(
     UUID id,
-    String aggregateType,
+    AggregateType aggregateType,
     String aggregateId,
-    String eventType,
+    EventType eventType,
     String payload,
     String traceId,
     OutboxStatus status,
@@ -18,5 +18,13 @@ public record OutboxEvent(
         PENDING,
         PROCESSED,
         FAILED
+    }
+
+    public enum AggregateType {
+        DOCUMENT
+    }
+
+    public enum EventType {
+        DOCUMENT_UPLOADED
     }
 }

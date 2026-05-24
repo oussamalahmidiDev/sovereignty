@@ -1,6 +1,8 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.persistence.entities;
 
 import com.oussama.sovereignty.domain.model.OutboxEvent.OutboxStatus;
+import com.oussama.sovereignty.domain.model.OutboxEvent.AggregateType;
+import com.oussama.sovereignty.domain.model.OutboxEvent.EventType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,9 +17,13 @@ public class OutboxEventEntity {
     @Id
     private UUID id;
 
-    private String aggregateType;
+    @Enumerated(EnumType.STRING)
+    private AggregateType aggregateType;
+
     private String aggregateId;
-    private String eventType;
+
+    @Enumerated(EnumType.STRING)
+    private EventType eventType;
 
     @Column(columnDefinition = "TEXT")
     private String payload;

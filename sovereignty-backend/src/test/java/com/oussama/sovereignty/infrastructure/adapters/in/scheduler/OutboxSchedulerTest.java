@@ -42,9 +42,9 @@ class OutboxSchedulerTest {
         String payload = "{}";
         OutboxEvent event = new OutboxEvent(
                 eventId,
-                "DOCUMENT",
+                OutboxEvent.AggregateType.DOCUMENT,
                 docId.toString(),
-                "DOCUMENT_UPLOADED",
+                OutboxEvent.EventType.DOCUMENT_UPLOADED,
                 payload,
                 "trace-123",
                 OutboxEvent.OutboxStatus.PENDING,
@@ -68,9 +68,9 @@ class OutboxSchedulerTest {
         UUID eventId = UUID.randomUUID();
         OutboxEvent event = new OutboxEvent(
                 eventId,
-                "DOCUMENT",
+                OutboxEvent.AggregateType.DOCUMENT,
                 "123",
-                "UNKNOWN_EVENT",
+                null,
                 "{}",
                 "trace-123",
                 OutboxEvent.OutboxStatus.PENDING,

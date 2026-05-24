@@ -62,9 +62,9 @@ public class ManageDocumentService implements ManageDocumentUseCase {
         String payload = jsonSerializer.serialize(document);
         OutboxEvent outboxEvent = new OutboxEvent(
                 UUID.randomUUID(),
-                "DOCUMENT",
+                OutboxEvent.AggregateType.DOCUMENT,
                 document.id().toString(),
-                "DOCUMENT_UPLOADED",
+                OutboxEvent.EventType.DOCUMENT_UPLOADED,
                 payload,
                 traceId,
                 OutboxEvent.OutboxStatus.PENDING,
