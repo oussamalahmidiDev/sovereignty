@@ -21,6 +21,9 @@ backend:
     limits:
       cpu: "500m"
       memory: "512Mi"
+  jmx:
+    enabled: false
+    port: 9010
 
 frontend:
   name: sovereignty-frontend

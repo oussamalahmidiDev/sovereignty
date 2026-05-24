@@ -56,7 +56,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers,threaddump,heapdump
+        include: health,info,metrics,prometheus,loggers,threaddump,heapdump,jfr
   health:
     livenessState:
       enabled: true
