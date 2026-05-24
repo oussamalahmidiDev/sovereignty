@@ -57,10 +57,14 @@ export class App {
         return;
       }
 
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'auto',
-      });
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'auto',
+        });
+      } else {
+        container.scrollTop = container.scrollHeight;
+      }
     });
   }
 
