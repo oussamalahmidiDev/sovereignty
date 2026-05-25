@@ -1,6 +1,7 @@
 package com.oussama.sovereignty.infrastructure.adapters.out.persistence.entities;
 
 import com.oussama.sovereignty.domain.model.ChatMessage.Role;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -32,6 +33,7 @@ public class ChatMessageEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
     private LocalDateTime createdAt;
 }

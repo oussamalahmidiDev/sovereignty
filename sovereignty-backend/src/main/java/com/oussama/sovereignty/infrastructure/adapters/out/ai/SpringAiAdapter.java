@@ -5,10 +5,9 @@ import com.oussama.sovereignty.application.aop.TimedStep;
 import com.oussama.sovereignty.application.common.StreamCallback;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,10 +15,9 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "sovereignty.ai.provider", havingValue = "ollama", matchIfMissing = true)
-public class OllamaAiAdapter implements AiAgentPort {
+public class SpringAiAdapter implements AiAgentPort {
 
-    private final OllamaChatModel chatModel;
+    private final ChatModel chatModel;
 
     @Override
     @TimedStep("rag.ask.duration")

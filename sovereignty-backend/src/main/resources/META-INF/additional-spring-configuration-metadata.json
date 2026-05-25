@@ -1,0 +1,40 @@
+{
+  "properties": [
+    {
+      "name": "sovereignty.vector-store.provider",
+      "type": "java.lang.String",
+      "description": "The vector store provider. Option can be 'internal' (JSON-based) or 'pgvector' (PostgreSQL).",
+      "defaultValue": "internal"
+    },
+    {
+      "name": "sovereignty.vector-store.file-path",
+      "type": "java.lang.String",
+      "description": "File path where vector store content is persisted for the internal provider.",
+      "defaultValue": "./storage/vector-store.json"
+    },
+    {
+      "name": "sovereignty.storage.provider",
+      "type": "java.lang.String",
+      "description": "Storage provider for raw uploaded documents.",
+      "defaultValue": "local"
+    },
+    {
+      "name": "sovereignty.storage.path",
+      "type": "java.lang.String",
+      "description": "File system path where uploaded documents are stored.",
+      "defaultValue": "./storage"
+    },
+    {
+      "name": "sovereignty.messaging.provider",
+      "type": "java.lang.String",
+      "description": "Messaging provider. Options are 'internal' (in-memory async virtual threads) or 'kafka'.",
+      "defaultValue": "internal"
+    },
+    {
+      "name": "sovereignty.ai.provider",
+      "type": "java.lang.String",
+      "description": "AI provider. Options are 'ollama' or 'openai'.",
+      "defaultValue": "ollama"
+    }
+  ]
+}
