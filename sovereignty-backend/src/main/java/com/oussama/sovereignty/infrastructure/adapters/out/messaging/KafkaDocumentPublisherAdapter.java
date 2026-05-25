@@ -8,8 +8,11 @@ import org.springframework.stereotype.Component;
 
 import static com.oussama.sovereignty.infrastructure.Constants.DOCUMENT_UPLOADED_TOPIC;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "sovereignty.messaging.provider", havingValue = "kafka")
 public class KafkaDocumentPublisherAdapter implements DocumentEventPublisherPort {
 
     private final KafkaTemplate<String, Document> kafkaTemplate;

@@ -15,8 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "sovereignty.vector-store.provider", havingValue = "pgvector")
 public class PgVectorAdapter implements VectorStorePort {
 
     private final VectorStore pgVectorStore;

@@ -18,9 +18,12 @@ import org.springframework.stereotype.Component;
 
 import static com.oussama.sovereignty.infrastructure.Constants.DOCUMENT_UPLOADED_TOPIC;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "sovereignty.messaging.provider", havingValue = "kafka")
 public class DocumentWorker {
 
     private final IndexDocumentUseCase indexDocumentUseCase;

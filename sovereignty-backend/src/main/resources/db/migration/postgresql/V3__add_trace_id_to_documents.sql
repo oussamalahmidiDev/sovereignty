@@ -1,0 +1,1 @@
+ALTER TABLE documents ADD COLUMN trace_id VARCHAR(255);
