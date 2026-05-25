@@ -2,6 +2,9 @@ server:
   port: 8080
   http2:
     enabled: true
+  tomcat:
+    max-keep-alive-requests: 1000
+    keep-alive-timeout: 60000
 
 spring:
   application:
@@ -20,6 +23,9 @@ spring:
       minimum-idle: 10
       idle-timeout: 30000
       connection-timeout: 20000
+      leak-detection-threshold: 2000
+      keepalive-time: 30000
+      max-lifetime: 1800000
 
   flyway:
     enabled: true
