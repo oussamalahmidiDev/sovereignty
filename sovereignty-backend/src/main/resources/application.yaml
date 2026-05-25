@@ -9,11 +9,17 @@ server:
 spring:
   profiles:
     active: local
+  docker:
+    compose:
+      enabled: false
   application:
     name: sovereignty-ai
   threads:
     virtual:
       enabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
 
   jpa:
     hibernate:
