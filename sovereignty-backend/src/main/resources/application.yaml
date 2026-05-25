@@ -1,3 +1,8 @@
+server:
+  port: 8080
+  http2:
+    enabled: true
+
 spring:
   application:
     name: sovereignty-ai
